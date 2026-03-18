@@ -1,0 +1,710 @@
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0f1923;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e8e8e8;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.screen{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;position:absolute;top:0;left:0;transition:opacity 0.3s}
+.screen.hidden{opacity:0;pointer-events:none}
+.title{font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+.title .accent{color:#f59e0b}
+.subtitle{font-size:15px;color:#94a3b8;margin-bottom:30px;max-width:300px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 40px;border-radius:14px;font-size:18px;font-weight:700;border:none;cursor:pointer;transition:transform 0.15s,background 0.2s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(0.95)}
+.btn-primary{background:#f59e0b;color:#1a1a2e}
+.btn-secondary{background:rgba(255,255,255,0.1);color:#e8e8e8;margin-top:10px;font-size:14px;padding:12px 30px}
+.position-badge{display:inline-block;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.position-badge.forward{background:rgba(245,158,11,0.2);color:#f59e0b}
+.position-badge.midfielder{background:rgba(59,130,246,0.2);color:#60a5fa}
+.position-badge.defender{background:rgba(34,197,94,0.2);color:#4ade80}
+.phase-badge{display:inline-block;padding:4px 14px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.phase-badge.attacking{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+.phase-badge.defending{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}
+.briefing-title{font-size:22px;font-weight:700;margin-bottom:10px}
+.briefing-text{font-size:15px;color:#94a3b8;line-height:1.6;max-width:320px;margin-bottom:24px}
+.game-container{width:100%;height:100%;display:flex;flex-direction:column;position:relative}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;height:50px;flex-shrink:0}
+.hud-score{font-size:20px;font-weight:800;color:#f59e0b}
+.hud-scenario{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.hud-position{font-size:13px;font-weight:600;color:#94a3b8}
+.timer-bar{height:4px;background:rgba(255,255,255,0.1);flex-shrink:0}
+.timer-fill{height:100%;background:#f59e0b;transition:width 0.1s linear;border-radius:0 2px 2px 0}
+.pitch-wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:8px}
+.pitch{position:relative;background:#1e6b3a;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,0.25);touch-action:none;max-width:400px}
+.pitch-lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.pitch-lines svg{width:100%;height:100%}
+.hint-bar{height:40px;display:flex;align-items:center;justify-content:center;padding:0 16px;flex-shrink:0}
+.hint-text{font-size:13px;color:#94a3b8;text-align:center;animation:fadeIn 0.5s}
+.dot{position:absolute;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:rgba(255,255,255,0.9);pointer-events:none;transition:left 0.8s ease,top 0.8s ease}
+.dot.user-player{width:38px;height:38px;background:#3b82f6;border:3px solid #93c5fd;box-shadow:0 0 16px rgba(59,130,246,0.5);z-index:20;pointer-events:auto;cursor:grab;transition:none;font-size:9px}
+.dot.team{width:24px;height:24px;background:#3b82f6;border:2px solid #93c5fd;z-index:10}
+.dot.opponent{width:24px;height:24px;background:#ef4444;border:2px solid #fca5a5;z-index:10}
+.dot.ball{width:14px;height:14px;background:#fff;border:2px solid #d1d5db;z-index:15;transition:left 1s ease,top 1s ease}
+.dot.ghost{width:36px;height:36px;background:rgba(245,158,11,0.2);border:2px dashed rgba(245,158,11,0.5);z-index:5;transition:left 0.4s ease,top 0.4s ease;animation:ghostPulse 1.5s ease-in-out infinite}
+.dot-label{position:absolute;bottom:-14px;font-size:8px;color:rgba(255,255,255,0.6);font-weight:600;white-space:nowrap;pointer-events:none}
+.proximity-ring{position:absolute;border-radius:50%;border:2px solid rgba(74,222,128,0.4);background:rgba(74,222,128,0.08);transform:translate(-50%,-50%);z-index:4;pointer-events:none;transition:width 0.3s,height 0.3s,opacity 0.3s}
+.point-popup{position:absolute;font-weight:800;font-size:16px;color:#4ade80;z-index:30;pointer-events:none;animation:floatUp 0.8s ease forwards}
+.freeze-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,25,35,0.6);z-index:25;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s}
+.freeze-prompt{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:16px;font-weight:700;color:#fff;z-index:30;text-shadow:0 2px 8px rgba(0,0,0,0.5)}
+.freeze-option{position:absolute;transform:translate(-50%,-50%);z-index:30;cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:4px}
+.freeze-circle{width:56px;height:56px;border-radius:50%;border:3px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.15);transition:all 0.3s}
+.freeze-label{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.8);white-space:nowrap;background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:8px}
+.freeze-circle.correct{border-color:#4ade80;background:rgba(74,222,128,0.4)}
+.freeze-circle.wrong{border-color:#ef4444;background:rgba(239,68,68,0.3)}
+.feedback-card{position:absolute;bottom:50px;left:12px;right:12px;background:rgba(15,25,35,0.95);border-radius:14px;padding:20px 22px;z-index:35;animation:slideUp 0.3s ease;border:1px solid rgba(255,255,255,0.1)}
+.feedback-card.correct{border-color:rgba(74,222,128,0.3)}
+.feedback-card.wrong{border-color:rgba(239,68,68,0.3)}
+.feedback-icon{font-size:28px;margin-bottom:6px}
+.feedback-msg{font-size:18px;line-height:1.6;color:#cbd5e1}
+.results-score{font-size:48px;font-weight:800;color:#f59e0b;margin:10px 0}
+.stars{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.star{width:40px;height:40px;transition:transform 0.3s}
+.star svg{width:100%;height:100%}
+.star.earned svg{fill:#f59e0b}
+.star.empty svg{fill:#334155}
+.results-breakdown{text-align:left;width:100%;max-width:300px;margin:16px auto}
+.breakdown-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14px}
+.breakdown-label{color:#94a3b8}
+.breakdown-val{font-weight:700;color:#e8e8e8}
+@keyframes ghostPulse{0%,100%{opacity:0.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-30px);opacity:0}}
+@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+@keyframes slideUp{0%{transform:translateY(20px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+</style>
+<div id="app"></div>
+<script>
+const SCENARIOS=[
+{id:1,position:'Forward',posClass:'forward',phase:'attacking',title:'Come short',
+briefing:'Your centre mid has the ball but opponents are closing in. Help them!',
+tip:'When a teammate is under pressure, move toward them for a short pass — don\'t wait for it to come to you!',
+playerStart:{x:50,y:22},playerRole:'CF',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:75},{r:'RB',x:75,y:75},{r:'LM',x:22,y:52},{r:'CM',x:50,y:52},{r:'RM',x:78,y:52}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:25},{r:'RB',x:70,y:25},{r:'LM',x:25,y:42},{r:'CM',x:50,y:42},{r:'RM',x:75,y:42},{r:'CF',x:50,y:60}],
+ballPath:[{x:50,y:92,t:0},{x:75,y:75,t:2000},{x:50,y:52,t:5000},{x:50,y:52,t:12000}],
+ghostPath:[{x:50,y:22,t:0},{x:50,y:22,t:3000},{x:48,y:30,t:6000},{x:46,y:38,t:9000},{x:46,y:38,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:50,y:22,label:'Stay high',correct:false},{x:46,y:38,label:'Come short',correct:true},{x:15,y:22,label:'Go wide',correct:false}],
+correctMsg:'Smart! Coming short gives your CM a safe pass and pulls a defender with you.',
+wrongMsg:'Your CM needs help! Come short to give them a passing option nearby.'},
+
+{id:2,position:'Forward',posClass:'forward',phase:'attacking',title:'Run the channel',
+briefing:'Your left midfielder has the ball wide. There\'s space behind the defence — can you find it?',
+tip:'When a teammate has the ball wide and there\'s space in behind, make a run! Don\'t just stand still waiting.',
+playerStart:{x:50,y:25},playerRole:'CF',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:75},{r:'RB',x:75,y:75},{r:'LM',x:15,y:45},{r:'CM',x:50,y:55},{r:'RM',x:78,y:55}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:22},{r:'RB',x:70,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:55,y:58}],
+ballPath:[{x:50,y:55,t:0},{x:15,y:45,t:2500},{x:15,y:45,t:11000}],
+ghostPath:[{x:50,y:25,t:0},{x:50,y:25,t:2000},{x:40,y:20,t:5000},{x:32,y:14,t:8000},{x:32,y:14,t:11000}],
+freezeAt:11000,
+freezeOptions:[{x:20,y:38,label:'Go to ball',correct:false},{x:32,y:14,label:'Run in behind',correct:true},{x:50,y:25,label:'Stay put',correct:false}],
+correctMsg:'Great run! You found the space behind their defence. The pass is on!',
+wrongMsg:'There was a gap behind the defence — running into that space gives your teammate a great pass to play.'},
+
+{id:3,position:'Midfielder',posClass:'midfielder',phase:'attacking',title:'Find the pocket',
+briefing:'Your defenders are building up play. Find the space between the opposition lines!',
+tip:'As a midfielder, the space between their midfield and defence is gold. If you can receive there, you\'re dangerous!',
+playerStart:{x:50,y:55},playerRole:'CM',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:22,y:72},{r:'RB',x:78,y:72},{r:'LM',x:20,y:50},{r:'CF',x:50,y:25},{r:'RM',x:80,y:50}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:22},{r:'RB',x:70,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:48,y:55}],
+ballPath:[{x:50,y:92,t:0},{x:22,y:72,t:2000},{x:78,y:72,t:5000},{x:78,y:72,t:11000}],
+ghostPath:[{x:50,y:55,t:0},{x:50,y:55,t:2000},{x:55,y:48,t:5000},{x:58,y:42,t:8000},{x:58,y:42,t:11000}],
+freezeAt:11000,
+freezeOptions:[{x:50,y:55,label:'Stay deep',correct:false},{x:58,y:42,label:'Find the pocket',correct:true},{x:55,y:22,label:'Run past defence',correct:false}],
+correctMsg:'Yes! You found the space between their lines — that\'s where the danger is!',
+wrongMsg:'Look for the gap between their midfield and defence. Receiving there puts you in a really powerful position.'},
+
+{id:4,position:'Midfielder',posClass:'midfielder',phase:'attacking',title:'Support the attack',
+briefing:'Your forward is holding the ball up with their back to goal. Get up there and help!',
+tip:'When a forward has the ball and is under pressure, get close and offer support. They can\'t do it alone!',
+playerStart:{x:50,y:52},playerRole:'CM',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:72},{r:'RB',x:75,y:72},{r:'LM',x:18,y:48},{r:'CF',x:48,y:28},{r:'RM',x:82,y:48}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:24},{r:'RB',x:65,y:24},{r:'LM',x:25,y:38},{r:'CM',x:52,y:30},{r:'RM',x:75,y:38},{r:'CF',x:50,y:58}],
+ballPath:[{x:18,y:48,t:0},{x:48,y:28,t:3000},{x:48,y:28,t:11000}],
+ghostPath:[{x:50,y:52,t:0},{x:50,y:52,t:2000},{x:48,y:44,t:5000},{x:45,y:36,t:8000},{x:45,y:36,t:11000}],
+freezeAt:11000,
+freezeOptions:[{x:50,y:52,label:'Stay back',correct:false},{x:45,y:36,label:'Push up to help',correct:true},{x:82,y:45,label:'Go wide right',correct:false}],
+correctMsg:'Brilliant! Getting close to the forward gives them someone to lay the ball off to.',
+wrongMsg:'Your forward is battling alone up there! Push up closer so they have a passing option.'},
+
+{id:5,position:'Defender',posClass:'defender',phase:'attacking',title:'Push up with the team',
+briefing:'Your team has the ball and is attacking. Don\'t get left behind!',
+tip:'When your team attacks, push up to keep everyone compact. Staying too deep leaves a massive gap in the middle.',
+playerStart:{x:72,y:75},playerRole:'RB',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:28,y:72},{r:'LM',x:22,y:42},{r:'CM',x:50,y:40},{r:'RM',x:78,y:42},{r:'CF',x:52,y:22}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:25},{r:'RB',x:70,y:25},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:75,y:40},{r:'CF',x:50,y:55}],
+ballPath:[{x:78,y:42,t:0},{x:50,y:40,t:2500},{x:22,y:42,t:5500},{x:22,y:42,t:11000}],
+ghostPath:[{x:72,y:75,t:0},{x:72,y:68,t:2500},{x:70,y:60,t:5500},{x:68,y:55,t:8500},{x:68,y:55,t:11000}],
+freezeAt:11000,
+freezeOptions:[{x:72,y:75,label:'Stay back',correct:false},{x:68,y:55,label:'Push to halfway',correct:true},{x:70,y:30,label:'Join the attack',correct:false}],
+correctMsg:'Spot on! Pushing up to the halfway line keeps your team compact and ready.',
+wrongMsg:'Your whole team moved up but you stayed behind — that leaves a big gap. Push up to the halfway line!'},
+
+{id:6,position:'Defender',posClass:'defender',phase:'attacking',title:'Show for the keeper',
+briefing:'Your goalkeeper has the ball and wants to play out from the back. Make yourself available!',
+tip:'When the keeper has the ball, spread wide to give them an angle. Don\'t hide behind opponents!',
+playerStart:{x:28,y:72},playerRole:'LB',
+team:[{r:'GK',x:50,y:92},{r:'RB',x:72,y:72},{r:'LM',x:22,y:50},{r:'CM',x:50,y:55},{r:'RM',x:78,y:50},{r:'CF',x:50,y:28}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:25},{r:'RB',x:70,y:25},{r:'LM',x:25,y:42},{r:'CM',x:50,y:42},{r:'RM',x:75,y:42},{r:'CF',x:45,y:60}],
+ballPath:[{x:50,y:92,t:0},{x:50,y:92,t:11000}],
+ghostPath:[{x:28,y:72,t:0},{x:22,y:72,t:2000},{x:16,y:70,t:5000},{x:14,y:68,t:8000},{x:14,y:68,t:11000}],
+freezeAt:11000,
+freezeOptions:[{x:14,y:68,label:'Go wide',correct:true},{x:28,y:50,label:'Run forward',correct:false},{x:42,y:72,label:'Tuck in central',correct:false}],
+correctMsg:'Great positioning! Going wide gives the keeper a clear angle to pass to you.',
+wrongMsg:'The keeper needs a passing angle. Go wide toward the touchline so they can see you clearly!'},
+
+{id:7,position:'Forward',posClass:'forward',phase:'attacking',title:'Drift wide',
+briefing:'You\'re up front but a defender is right on you. Your right back has the ball — move to give them a passing lane!',
+tip:'If a defender is blocking the pass to you, don\'t just stand there! Drift into a wide channel to lose the marker and open up a clear line for the ball.',
+playerStart:{x:50,y:24},playerRole:'CF',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:72},{r:'RB',x:78,y:68},{r:'LM',x:22,y:48},{r:'CM',x:50,y:50},{r:'RM',x:80,y:48}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:32,y:22},{r:'RB',x:68,y:22},{r:'LM',x:25,y:40},{r:'CM',x:52,y:26},{r:'RM',x:75,y:40},{r:'CF',x:50,y:58}],
+ballPath:[{x:50,y:50,t:0},{x:78,y:68,t:2500},{x:78,y:60,t:5000},{x:78,y:60,t:12000}],
+ghostPath:[{x:50,y:24,t:0},{x:50,y:24,t:2500},{x:58,y:23,t:5000},{x:68,y:20,t:8000},{x:80,y:18,t:10000},{x:80,y:18,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:50,y:24,label:'Stay central',correct:false},{x:80,y:18,label:'Drift wide right',correct:true},{x:50,y:14,label:'Run at goal',correct:false}],
+correctMsg:'Smart movement! By drifting wide you lost your marker and opened a clear channel for the pass from the right back.',
+wrongMsg:'The defender was blocking the pass to you centrally. Drift wide into the channel — it pulls you away from the marker and gives your teammate a clear line to find you.'},
+
+{id:8,position:'Forward',posClass:'forward',phase:'defending',title:'Press from the front',
+briefing:'The other team\'s centre back has the ball at the back. Don\'t just watch — go and put them under pressure!',
+tip:'When the opposition have the ball at the back, your job as the forward is to press! Sprint at the player on the ball to rush them into a mistake.',
+playerStart:{x:50,y:30},playerRole:'CF',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:72},{r:'RB',x:75,y:72},{r:'LM',x:22,y:52},{r:'CM',x:50,y:52},{r:'RM',x:78,y:52}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:20,y:28},{r:'RB',x:80,y:28},{r:'LM',x:25,y:42},{r:'CM',x:50,y:18},{r:'RM',x:75,y:42},{r:'CF',x:50,y:60}],
+ballPath:[{x:50,y:18,t:0},{x:50,y:18,t:12000}],
+ghostPath:[{x:50,y:30,t:0},{x:50,y:30,t:1500},{x:50,y:26,t:4000},{x:50,y:22,t:7000},{x:51,y:20,t:10000},{x:51,y:20,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:50,y:30,label:'Stay and watch',correct:false},{x:51,y:20,label:'Close them down',correct:true},{x:25,y:30,label:'Cover the wing',correct:false}],
+correctMsg:'Yes! Pressing from the front puts the defender under pressure — they might panic and give the ball away!',
+wrongMsg:'Don\'t just watch them play! Get up there and close them down — make them rush their pass.'},
+
+{id:9,position:'Forward',posClass:'forward',phase:'defending',title:'Cut off the pass',
+briefing:'Their right back has the ball and wants to pass it across to the centre back. Can you stop them?',
+tip:'When you press, think about your angle. If you run straight, they can pass around you. Curve your run to block the easy pass and force them where you want.',
+playerStart:{x:50,y:28},playerRole:'CF',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:25,y:72},{r:'RB',x:75,y:72},{r:'LM',x:22,y:52},{r:'CM',x:50,y:52},{r:'RM',x:78,y:52}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:20,y:28},{r:'RB',x:80,y:25},{r:'LM',x:25,y:42},{r:'CM',x:50,y:20},{r:'RM',x:75,y:42},{r:'CF',x:50,y:60}],
+ballPath:[{x:80,y:25,t:0},{x:80,y:25,t:12000}],
+ghostPath:[{x:50,y:28,t:0},{x:55,y:27,t:2000},{x:60,y:25,t:4500},{x:65,y:23,t:7000},{x:68,y:22,t:10000},{x:68,y:22,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:80,y:20,label:'Run straight at them',correct:false},{x:68,y:22,label:'Angle to cut off pass',correct:true},{x:50,y:28,label:'Hold position',correct:false}],
+correctMsg:'Brilliant! By curving your run you blocked the pass to the centre back and forced them wide. That\'s a smart press!',
+wrongMsg:'If you run straight at them, they just pass it to the CB. Angle your run to block that pass — force them toward the touchline where they have less options.'},
+
+{id:10,position:'Midfielder',posClass:'midfielder',phase:'defending',title:'Get goalside',
+briefing:'Your team just lost the ball in attack! The opposition midfielder is running forward with it. Get back!',
+tip:'When your team loses the ball, the first thing to do is get goalside — between the ball and your own goal. Don\'t ball-watch!',
+playerStart:{x:45,y:38},playerRole:'CM',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:28,y:65},{r:'RB',x:72,y:65},{r:'LM',x:20,y:45},{r:'CF',x:48,y:25},{r:'RM',x:80,y:45}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:22},{r:'RB',x:70,y:22},{r:'LM',x:30,y:42},{r:'CM',x:48,y:42},{r:'RM',x:72,y:42},{r:'CF',x:50,y:62}],
+ballPath:[{x:48,y:42,t:0},{x:48,y:45,t:3000},{x:48,y:50,t:6000},{x:48,y:55,t:9000},{x:48,y:55,t:12000}],
+ghostPath:[{x:45,y:38,t:0},{x:46,y:42,t:2000},{x:47,y:48,t:4500},{x:48,y:54,t:7000},{x:48,y:58,t:10000},{x:48,y:58,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:45,y:38,label:'Stay where you are',correct:false},{x:48,y:58,label:'Get goalside',correct:true},{x:30,y:42,label:'Go to their player',correct:false}],
+correctMsg:'Great recovery! You got goalside quickly — now you\'re between the ball and your goal and ready to defend.',
+wrongMsg:'When the ball is lost, don\'t stand still! Sprint back goalside — get between the ball and your own goal so you can help your defenders.'},
+
+{id:11,position:'Midfielder',posClass:'midfielder',phase:'defending',title:'Protect the centre',
+briefing:'The opposition are attacking down the wing. Your left back has gone to press the ball. Cover the dangerous space they left!',
+tip:'When a teammate goes out to press the ball, someone needs to cover the space behind them. As a midfielder, drop in and fill the gap!',
+playerStart:{x:50,y:52},playerRole:'CM',
+team:[{r:'GK',x:50,y:92},{r:'LB',x:15,y:55},{r:'RB',x:75,y:72},{r:'LM',x:25,y:48},{r:'CF',x:50,y:28},{r:'RM',x:78,y:52}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:30,y:22},{r:'RB',x:70,y:22},{r:'LM',x:18,y:52},{r:'CM',x:45,y:45},{r:'RM',x:75,y:42},{r:'CF',x:42,y:62}],
+ballPath:[{x:18,y:52,t:0},{x:18,y:52,t:5000},{x:42,y:62,t:8000},{x:42,y:62,t:12000}],
+ghostPath:[{x:50,y:52,t:0},{x:48,y:55,t:2000},{x:42,y:60,t:5000},{x:38,y:65,t:8000},{x:38,y:65,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:50,y:52,label:'Hold midfield',correct:false},{x:38,y:65,label:'Drop and cover',correct:true},{x:18,y:58,label:'Press the ball',correct:false}],
+correctMsg:'Smart! Your left back went to press, so you dropped in to cover the gap. That stops the opposition from exploiting the space.',
+wrongMsg:'When your left back goes out to press, they leave a gap. You need to drop in and cover that space — otherwise the attackers will run straight through it.'},
+
+{id:12,position:'Defender',posClass:'defender',phase:'defending',title:'Hold your shape',
+briefing:'The opposition are passing the ball across midfield, trying to pull your defence apart. Stay disciplined!',
+tip:'Don\'t chase the ball as a defender! Stay in line with your defensive partner and keep your shape. If you rush out, you leave a massive hole.',
+playerStart:{x:30,y:70},playerRole:'LB',
+team:[{r:'GK',x:50,y:92},{r:'RB',x:70,y:70},{r:'LM',x:25,y:52},{r:'CM',x:50,y:52},{r:'RM',x:75,y:52},{r:'CF',x:50,y:30}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:25},{r:'RB',x:75,y:25},{r:'LM',x:20,y:45},{r:'CM',x:50,y:45},{r:'RM',x:80,y:45},{r:'CF',x:45,y:58}],
+ballPath:[{x:80,y:45,t:0},{x:50,y:45,t:3000},{x:20,y:45,t:6000},{x:45,y:58,t:9000},{x:45,y:58,t:12000}],
+ghostPath:[{x:30,y:70,t:0},{x:32,y:70,t:3000},{x:30,y:70,t:6000},{x:35,y:68,t:9000},{x:35,y:68,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:20,y:55,label:'Chase the ball',correct:false},{x:35,y:68,label:'Hold your line',correct:true},{x:50,y:60,label:'Tuck in tight',correct:false}],
+correctMsg:'Solid! You held your position in line with your partner. The midfield should deal with the ball — your job is to stay in shape and be ready.',
+wrongMsg:'Don\'t get sucked toward the ball! If you chase it, you leave a huge gap behind you. Stay in line with your defensive partner and trust your midfield.'},
+
+{id:13,position:'Defender',posClass:'defender',phase:'defending',title:'Drop and cover',
+briefing:'Their forward is making a run in behind your defensive partner. Your partner has gone to press — cover the space behind!',
+tip:'When your fellow defender goes to press the ball, drop deeper to cover the space behind them. If you both go, it\'s a free run at goal!',
+playerStart:{x:30,y:70},playerRole:'LB',
+team:[{r:'GK',x:50,y:92},{r:'RB',x:68,y:62},{r:'LM',x:25,y:52},{r:'CM',x:50,y:52},{r:'RM',x:75,y:52},{r:'CF',x:50,y:30}],
+opponents:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:25},{r:'RB',x:75,y:25},{r:'LM',x:22,y:45},{r:'CM',x:50,y:45},{r:'RM',x:78,y:50},{r:'CF',x:60,y:60}],
+ballPath:[{x:78,y:50,t:0},{x:72,y:55,t:3000},{x:60,y:60,t:6000},{x:60,y:60,t:12000}],
+ghostPath:[{x:30,y:70,t:0},{x:35,y:70,t:2000},{x:42,y:72,t:4500},{x:48,y:75,t:7000},{x:50,y:78,t:10000},{x:50,y:78,t:12000}],
+freezeAt:12000,
+freezeOptions:[{x:30,y:70,label:'Stay wide left',correct:false},{x:50,y:78,label:'Drop behind partner',correct:true},{x:60,y:62,label:'Press with partner',correct:false}],
+correctMsg:'Great cover! Your partner went to press so you dropped behind to cover the space. Now there\'s no free run at goal.',
+wrongMsg:'Your partner already went to press — if you go too, nobody is covering behind! Drop deeper to cover the space in case the attacker gets past.'}
+];
+
+let state={screen:'menu',round:null,scenario:null,scenarioIndex:0,playerPos:{x:50,y:50},
+score:0,roundScore:0,scenarioScores:[],freezeAnswered:false,freezeCorrect:false,
+elapsedTime:0,isDragging:false,difficulty:1,roundsPlayed:0};
+
+let els={};
+let gameTimer=null;
+let scoreTimer=null;
+let startTime=0;
+let popupId=0;
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function lerp(a,b,t){return a+(b-a)*Math.min(1,Math.max(0,t))}
+
+function interpPath(path,time){
+for(let i=path.length-1;i>=0;i--){
+if(time>=path[i].t){
+if(i===path.length-1)return{x:path[i].x,y:path[i].y};
+const n=path[i+1];const pct=(time-path[i].t)/(n.t-path[i].t);
+return{x:lerp(path[i].x,n.x,pct),y:lerp(path[i].y,n.y,pct)}}
+}return{x:path[0].x,y:path[0].y}}
+
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
+
+function render(){
+const app=document.getElementById('app');
+if(state.screen==='menu')renderMenu(app);
+else if(state.screen==='briefing')renderBriefing(app);
+else if(state.screen==='playing'||state.screen==='freeze'||state.screen==='feedback')renderGame(app);
+else if(state.screen==='results')renderResults(app);
+}
+
+function renderMenu(app){
+app.innerHTML=`<div class="screen">
+<div class="title">FIND <span class="accent">SPACE</span></div>
+<p class="subtitle">Learn to read the game — find space in attack, hold your shape in defence. Drag your player to follow the ghost, then prove you can read the play!</p>
+<button class="btn btn-primary" onclick="startRound()">Play</button>
+<div style="margin-top:24px;display:flex;gap:8px;justify-content:center">
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #93c5fd"></div> You</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><div style="width:14px;height:14px;border-radius:50%;background:rgba(245,158,11,0.2);border:2px dashed rgba(245,158,11,0.5)"></div> Ghost</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:2px solid #93c5fd"></div> Team</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><div style="width:14px;height:14px;border-radius:50%;background:#ef4444;border:2px solid #fca5a5"></div> Opps</div>
+</div>
+</div>`}
+
+function renderBriefing(app){
+const s=state.scenario;
+const phase=s.phase||'attacking';
+app.innerHTML=`<div class="screen">
+<span class="phase-badge ${phase}">${phase==='attacking'?'⚡ In possession':'🛡 Out of possession'}</span>
+<span class="position-badge ${s.posClass}">${s.position} · ${s.playerRole}</span>
+<div class="briefing-title">${s.title}</div>
+<p class="briefing-text">${s.briefing}</p>
+<p style="font-size:12px;color:#475569;margin-bottom:20px">Scenario ${state.scenarioIndex+1} of 5</p>
+<button class="btn btn-primary" onclick="beginScenario()">Go!</button>
+</div>`}
+
+function renderGame(app){
+app.innerHTML='';
+const container=document.createElement('div');
+container.className='game-container';
+
+const phase=state.scenario.phase||'attacking';
+const phaseIcon=phase==='attacking'?'⚡':'🛡';
+const phaseColor=phase==='attacking'?'#fbbf24':'#f87171';
+
+const hud=document.createElement('div');
+hud.className='hud';
+hud.innerHTML=`<div><div class="hud-score" id="score-display">${Math.round(state.roundScore)}</div></div>
+<div style="text-align:center"><div class="hud-scenario"><span style="color:${phaseColor}">${phaseIcon}</span> ${state.scenario.title}</div><div class="hud-position" style="color:${state.scenario.posClass==='forward'?'#f59e0b':state.scenario.posClass==='midfielder'?'#60a5fa':'#4ade80'}">${state.scenario.position} · ${state.scenario.playerRole}</div></div>
+<div style="text-align:right"><div style="font-size:13px;color:#64748b">${state.scenarioIndex+1}/5</div></div>`;
+container.appendChild(hud);
+
+const timerBar=document.createElement('div');
+timerBar.className='timer-bar';
+timerBar.innerHTML=`<div class="timer-fill" id="timer-fill" style="width:0%"></div>`;
+container.appendChild(timerBar);
+
+const pw=document.createElement('div');
+pw.className='pitch-wrapper';
+const pitch=document.createElement('div');
+pitch.className='pitch';
+pitch.id='pitch';
+
+const svgLines=`<svg viewBox="0 0 100 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="100" height="150" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5"/>
+<line x1="0" y1="75" x2="100" y2="75" stroke="rgba(255,255,255,0.2)" stroke-width="0.4"/>
+<circle cx="50" cy="75" r="12" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.4"/>
+<circle cx="50" cy="75" r="0.8" fill="rgba(255,255,255,0.3)"/>
+<rect x="30" y="0" width="40" height="18" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.4"/>
+<rect x="30" y="132" width="40" height="18" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.4"/>
+<rect x="40" y="0" width="20" height="4" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+<rect x="40" y="146" width="20" height="4" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+</svg>`;
+const linesDiv=document.createElement('div');
+linesDiv.className='pitch-lines';
+linesDiv.innerHTML=svgLines;
+pitch.appendChild(linesDiv);
+
+const dirArrow=document.createElement('div');
+dirArrow.style.cssText='position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;opacity:0.5';
+dirArrow.innerHTML=`<svg width="18" height="40" viewBox="0 0 18 40"><polygon points="9,0 18,14 12,14 12,40 6,40 6,14 0,14" fill="rgba(255,255,255,0.7)"/></svg><span style="font-size:8px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:1px;writing-mode:vertical-rl;text-orientation:mixed">ATTACK</span>`;
+pitch.appendChild(dirArrow);
+
+const s=state.scenario;
+
+if(state.screen==='playing'){
+const ghost=makeDot('ghost','');
+ghost.id='ghost';
+pitch.appendChild(ghost)}
+
+s.team.forEach(p=>{pitch.appendChild(makeDot('team',p.r))});
+s.opponents.forEach(p=>{pitch.appendChild(makeDot('opponent',p.r))});
+
+const ball=makeDot('ball','');
+ball.id='ball';
+pitch.appendChild(ball);
+
+const player=makeDot('user-player',s.playerRole);
+player.id='user-player';
+const arrowSvg=document.createElement('div');
+arrowSvg.style.cssText='position:absolute;top:3px;left:50%;transform:translateX(-50%);pointer-events:none';
+arrowSvg.innerHTML=`<svg width="12" height="12" viewBox="0 0 14 14"><polygon points="7,1 12,8 9,8 9,13 5,13 5,8 2,8" fill="rgba(255,255,255,0.9)"/></svg>`;
+player.insertBefore(arrowSvg,player.firstChild);
+pitch.appendChild(player);
+
+const popLayer=document.createElement('div');
+popLayer.id='pop-layer';
+popLayer.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:30';
+pitch.appendChild(popLayer);
+
+if(state.screen==='freeze'||state.screen==='feedback'){
+const overlay=document.createElement('div');
+overlay.className='freeze-overlay';
+overlay.id='freeze-overlay';
+const prompt=document.createElement('div');
+prompt.className='freeze-prompt';
+prompt.textContent='Where should you be?';
+overlay.appendChild(prompt);
+
+s.freezeOptions.forEach((opt,i)=>{
+const fo=document.createElement('div');
+fo.className='freeze-option';
+fo.style.left=opt.x+'%';fo.style.top=(opt.y/100*150/150*100)+'%';
+const circle=document.createElement('div');
+circle.className='freeze-circle';
+circle.id='fo-circle-'+i;
+if(state.screen==='feedback'){
+circle.classList.add(opt.correct?'correct':'wrong');
+if(!opt.correct&&state.freezeAnswered)circle.style.opacity='0.4'}
+const label=document.createElement('div');
+label.className='freeze-label';
+label.textContent=opt.label;
+fo.appendChild(circle);fo.appendChild(label);
+if(state.screen==='freeze'){
+fo.style.pointerEvents='auto';
+fo.addEventListener('click',()=>handleFreezeChoice(i));
+fo.addEventListener('touchend',(e)=>{e.preventDefault();e.stopPropagation();handleFreezeChoice(i)})}
+overlay.appendChild(fo)});
+
+pitch.appendChild(overlay);
+
+if(state.screen==='feedback'){
+const fb=document.createElement('div');
+fb.className='feedback-card '+(state.freezeCorrect?'correct':'wrong');
+fb.innerHTML=`<div class="feedback-icon">${state.freezeCorrect?'✅':'❌'}</div>
+<div class="feedback-msg">${state.freezeCorrect?s.correctMsg:s.wrongMsg}</div>`;
+pitch.appendChild(fb)}}
+
+pw.appendChild(pitch);
+container.appendChild(pw);
+
+const hintBar=document.createElement('div');
+hintBar.className='hint-bar';
+hintBar.id='hint-bar';
+if(state.screen==='playing'){
+hintBar.innerHTML=`<span class="hint-text">Drag your player toward the ghost</span>`}
+container.appendChild(hintBar);
+
+app.appendChild(container);
+sizePitch();
+positionAll();
+setupTouch()}
+
+function makeDot(cls,label){
+const d=document.createElement('div');
+d.className='dot '+cls;
+if(label){const l=document.createElement('div');l.className='dot-label';l.textContent=label;d.appendChild(l)}
+return d}
+
+function sizePitch(){
+const pitch=document.getElementById('pitch');
+if(!pitch)return;
+const wrapper=pitch.parentElement;
+const ww=wrapper.clientWidth-16;
+const wh=wrapper.clientHeight-16;
+const aspect=2/3;
+let pw=ww;let ph=pw/aspect;
+if(ph>wh){ph=wh;pw=ph*aspect}
+pitch.style.width=pw+'px';pitch.style.height=ph+'px'}
+
+function posY(y){return(y/100)*100+'%'}
+function posX(x){return x+'%'}
+
+function positionAll(){
+const s=state.scenario;
+const pitch=document.getElementById('pitch');
+if(!pitch)return;
+
+const player=document.getElementById('user-player');
+if(player){player.style.left=posX(state.playerPos.x);player.style.top=posY(state.playerPos.y)}
+
+const ghost=document.getElementById('ghost');
+if(ghost){
+const gp=interpPath(s.ghostPath,state.elapsedTime);
+ghost.style.left=posX(gp.x);ghost.style.top=posY(gp.y)}
+
+const ball=document.getElementById('ball');
+if(ball){
+const bp=interpPath(s.ballPath,state.elapsedTime);
+ball.style.left=posX(bp.x);ball.style.top=posY(bp.y)}
+
+const teamDots=pitch.querySelectorAll('.dot.team');
+s.team.forEach((p,i)=>{if(teamDots[i]){teamDots[i].style.left=posX(p.x);teamDots[i].style.top=posY(p.y)}});
+
+const oppDots=pitch.querySelectorAll('.dot.opponent');
+s.opponents.forEach((p,i)=>{if(oppDots[i]){oppDots[i].style.left=posX(p.x);oppDots[i].style.top=posY(p.y)}})}
+
+function setupTouch(){
+const pitch=document.getElementById('pitch');
+const player=document.getElementById('user-player');
+if(!pitch||!player)return;
+
+let dragOffset={x:0,y:0};
+
+function startDrag(cx,cy){
+if(state.screen!=='playing')return;
+const pr=pitch.getBoundingClientRect();
+const plr=player.getBoundingClientRect();
+const pcx=plr.left+plr.width/2;
+const pcy=plr.top+plr.height/2;
+dragOffset.x=cx-pcx;
+dragOffset.y=cy-pcy;
+state.isDragging=true}
+
+function moveDrag(cx,cy){
+if(!state.isDragging||state.screen!=='playing')return;
+const pr=pitch.getBoundingClientRect();
+const rx=cx-dragOffset.x-pr.left;
+const ry=cy-dragOffset.y-pr.top;
+const px=Math.max(2,Math.min(98,(rx/pr.width)*100));
+const py=Math.max(2,Math.min(98,(ry/pr.height)*100));
+state.playerPos.x=px;state.playerPos.y=py;
+player.style.left=posX(px);player.style.top=posY(py)}
+
+function endDrag(){state.isDragging=false}
+
+player.addEventListener('touchstart',(e)=>{e.preventDefault();const t=e.touches[0];startDrag(t.clientX,t.clientY)},{passive:false});
+document.addEventListener('touchmove',(e)=>{if(state.isDragging){e.preventDefault();const t=e.touches[0];moveDrag(t.clientX,t.clientY)}},{passive:false});
+document.addEventListener('touchend',endDrag);
+
+player.addEventListener('mousedown',(e)=>{e.preventDefault();startDrag(e.clientX,e.clientY)});
+document.addEventListener('mousemove',(e)=>{moveDrag(e.clientX,e.clientY)});
+document.addEventListener('mouseup',endDrag);
+
+pitch.addEventListener('touchstart',(e)=>{
+if(state.screen==='playing'&&!state.isDragging){
+e.preventDefault();
+const t=e.touches[0];
+const pr=pitch.getBoundingClientRect();
+const px=(t.clientX-pr.left)/pr.width*100;
+const py=(t.clientY-pr.top)/pr.height*100;
+const d=dist(state.playerPos,{x:px,y:py});
+if(d<20){dragOffset.x=0;dragOffset.y=0;state.isDragging=true;moveDrag(t.clientX,t.clientY)}}},{passive:false})}
+
+function startRound(){
+const attacking=shuffle(SCENARIOS.filter(s=>(s.phase||'attacking')==='attacking'));
+const defending=shuffle(SCENARIOS.filter(s=>s.phase==='defending'));
+const atkPick=attacking.slice(0,3);
+const defPick=defending.slice(0,2);
+const picked=shuffle([...atkPick,...defPick]);
+state.round=picked;state.scenarioIndex=0;state.roundScore=0;state.scenarioScores=[];
+state.scenario=picked[0];state.screen='briefing';
+render()}
+
+function beginScenario(){
+const s=state.scenario;
+state.playerPos={...s.playerStart};
+state.elapsedTime=0;state.score=0;state.freezeAnswered=false;state.freezeCorrect=false;
+state.screen='playing';
+render();
+
+startTime=performance.now();
+gameTimer=requestAnimationFrame(gameTick);
+scoreTimer=setInterval(doScore,200)}
+
+function gameTick(ts){
+if(state.screen!=='playing'){return}
+state.elapsedTime=ts-startTime;
+
+const ghost=document.getElementById('ghost');
+if(ghost){const gp=interpPath(state.scenario.ghostPath,state.elapsedTime);ghost.style.left=posX(gp.x);ghost.style.top=posY(gp.y)}
+
+const ball=document.getElementById('ball');
+if(ball){const bp=interpPath(state.scenario.ballPath,state.elapsedTime);ball.style.left=posX(bp.x);ball.style.top=posY(bp.y)}
+
+const tf=document.getElementById('timer-fill');
+if(tf){tf.style.width=(state.elapsedTime/state.scenario.freezeAt*100)+'%'}
+
+if(state.elapsedTime>=state.scenario.freezeAt){
+triggerFreeze();return}
+
+gameTimer=requestAnimationFrame(gameTick)}
+
+function doScore(){
+if(state.screen!=='playing')return;
+const gp=interpPath(state.scenario.ghostPath,state.elapsedTime);
+const d=dist(state.playerPos,gp);
+let pts=0;
+if(d<5)pts=3;
+else if(d<10)pts=2;
+else if(d<15)pts=1;
+if(pts>0){
+state.score+=pts;state.roundScore+=pts;
+const sd=document.getElementById('score-display');
+if(sd)sd.textContent=Math.round(state.roundScore);
+if(Math.random()<0.3)showPopup(pts)}
+
+const player=document.getElementById('user-player');
+if(player){
+if(d<10)player.style.boxShadow='0 0 20px rgba(74,222,128,0.6)';
+else if(d<18)player.style.boxShadow='0 0 16px rgba(59,130,246,0.5)';
+else player.style.boxShadow='0 0 12px rgba(239,68,68,0.4)'}
+
+const hint=document.getElementById('hint-bar');
+if(hint){
+if(d<8)hint.innerHTML='<span class="hint-text" style="color:#4ade80">Great position!</span>';
+else if(d<18)hint.innerHTML='<span class="hint-text" style="color:#f59e0b">Getting closer...</span>';
+else hint.innerHTML='<span class="hint-text">Follow the ghost!</span>'}}
+
+function showPopup(pts){
+const pop=document.getElementById('pop-layer');
+if(!pop)return;
+const el=document.createElement('div');
+el.className='point-popup';
+el.style.left=state.playerPos.x+'%';
+el.style.top=posY(state.playerPos.y);
+el.textContent='+'+pts;
+el.id='pop-'+(popupId++);
+pop.appendChild(el);
+setTimeout(()=>el.remove(),900)}
+
+function triggerFreeze(){
+clearInterval(scoreTimer);
+state.screen='freeze';
+const tf=document.getElementById('timer-fill');
+if(tf)tf.style.width='100%';
+
+const ghost=document.getElementById('ghost');
+if(ghost)ghost.style.display='none';
+
+const hint=document.getElementById('hint-bar');
+if(hint)hint.innerHTML='<span class="hint-text" style="color:#60a5fa">Tap where you should be!</span>';
+
+const pitch=document.getElementById('pitch');
+renderFreezeOverlay(pitch)}
+
+function renderFreezeOverlay(pitch){
+const s=state.scenario;
+const overlay=document.createElement('div');
+overlay.className='freeze-overlay';
+overlay.id='freeze-overlay';
+const prompt=document.createElement('div');
+prompt.className='freeze-prompt';
+prompt.textContent='Where should you be?';
+overlay.appendChild(prompt);
+
+s.freezeOptions.forEach((opt,i)=>{
+const fo=document.createElement('div');
+fo.className='freeze-option';
+fo.style.left=opt.x+'%';fo.style.top=posY(opt.y);
+const circle=document.createElement('div');
+circle.className='freeze-circle';
+circle.id='fo-circle-'+i;
+const label=document.createElement('div');
+label.className='freeze-label';
+label.textContent=opt.label;
+fo.appendChild(circle);fo.appendChild(label);
+fo.addEventListener('click',()=>handleFreezeChoice(i));
+fo.addEventListener('touchend',(e)=>{e.preventDefault();e.stopPropagation();handleFreezeChoice(i)});
+overlay.appendChild(fo)});
+pitch.appendChild(overlay)}
+
+function handleFreezeChoice(idx){
+if(state.freezeAnswered)return;
+state.freezeAnswered=true;
+const s=state.scenario;
+const chosen=s.freezeOptions[idx];
+state.freezeCorrect=chosen.correct;
+
+if(chosen.correct){state.score+=50;state.roundScore+=50}
+
+s.freezeOptions.forEach((opt,i)=>{
+const c=document.getElementById('fo-circle-'+i);
+if(c){c.classList.add(opt.correct?'correct':'wrong');
+if(!opt.correct)c.style.opacity='0.4'}});
+
+const sd=document.getElementById('score-display');
+if(sd)sd.textContent=Math.round(state.roundScore);
+
+const pitch=document.getElementById('pitch');
+const fb=document.createElement('div');
+fb.className='feedback-card '+(state.freezeCorrect?'correct':'wrong');
+fb.innerHTML=`<div style="font-size:20px;margin-bottom:6px">${state.freezeCorrect?'✅':'❌'}</div>
+<div class="feedback-msg">${state.freezeCorrect?s.correctMsg:s.wrongMsg}</div>
+<div style="margin-top:12px;font-size:16px;color:#e2e8f0;line-height:1.6;background:rgba(255,255,255,0.06);padding:10px 14px;border-radius:8px;border-left:3px solid #fbbf24">💡 ${s.tip}</div>
+<div style="margin-top:14px;text-align:center"><button id="next-btn" style="background:#f59e0b;color:#1a1a2e;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">Got it →</button></div>`;
+pitch.appendChild(fb);
+
+state.scenarioScores.push({scenario:s,score:state.score,correct:state.freezeCorrect});
+
+document.getElementById('next-btn').addEventListener('click',()=>{nextScenario()});
+document.getElementById('next-btn').addEventListener('touchend',(e)=>{e.preventDefault();nextScenario()})}
+
+function nextScenario(){
+state.scenarioIndex++;
+if(state.scenarioIndex>=state.round.length){showResults();return}
+state.scenario=state.round[state.scenarioIndex];
+state.screen='briefing';
+render()}
+
+function showResults(){
+state.screen='results';
+const stars=state.roundScore>=400?3:state.roundScore>=220?2:state.roundScore>=80?1:0;
+const correctCount=state.scenarioScores.filter(s=>s.correct).length;
+const attackScenarios=state.scenarioScores.filter(s=>(s.scenario.phase||'attacking')==='attacking');
+const defendScenarios=state.scenarioScores.filter(s=>s.scenario.phase==='defending');
+const attackCorrect=attackScenarios.filter(s=>s.correct).length;
+const defendCorrect=defendScenarios.filter(s=>s.correct).length;
+state.roundsPlayed++;
+
+const app=document.getElementById('app');
+app.innerHTML=`<div class="screen">
+<p style="font-size:14px;color:#64748b;margin-bottom:4px">Round complete!</p>
+<div class="stars">${[0,1,2].map(i=>`<div class="star ${i<stars?'earned':'empty'}" style="animation:bounceIn 0.4s ${i*0.15}s both">
+<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></div>`).join('')}</div>
+<div class="results-score">${Math.round(state.roundScore)}</div>
+<div class="results-breakdown">
+<div class="breakdown-row"><span class="breakdown-label">Freeze decisions</span><span class="breakdown-val">${correctCount}/5 correct</span></div>
+${attackScenarios.length?`<div class="breakdown-row"><span class="breakdown-label"><span style="color:#fbbf24">⚡</span> Attack decisions</span><span class="breakdown-val">${attackCorrect}/${attackScenarios.length}</span></div>`:''}
+${defendScenarios.length?`<div class="breakdown-row"><span class="breakdown-label"><span style="color:#f87171">🛡</span> Defence decisions</span><span class="breakdown-val">${defendCorrect}/${defendScenarios.length}</span></div>`:''}
+<div class="breakdown-row"><span class="breakdown-label">Positioning points</span><span class="breakdown-val">${Math.round(state.roundScore-(correctCount*50))}</span></div>
+<div class="breakdown-row"><span class="breakdown-label">Decision bonus</span><span class="breakdown-val">${correctCount*50}</span></div>
+</div>
+<button class="btn btn-primary" onclick="startRound()" style="margin-top:16px">Play again</button>
+<button class="btn btn-secondary" onclick="goMenu()">Menu</button>
+</div>`}
+
+function goMenu(){state.screen='menu';render()}
+
+window.addEventListener('resize',()=>{if(state.screen==='playing'||state.screen==='freeze'||state.screen==='feedback')sizePitch()});
+
+render();
+</script>
