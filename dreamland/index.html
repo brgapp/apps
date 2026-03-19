@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Dreamland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--pink:#ff6b9d;--purple:#c084fc;--lavender:#dcc8ff;--gold:#ffd700;--sky:#7dd3fc;--mint:#6ee7b7;--deep:#0a0020;--card-bg:linear-gradient(160deg,#1c0b5e,#110338);--card-border:rgba(192,132,252,0.25)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Fredoka',sans-serif;background:var(--deep);color:white;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:twinkle var(--dur) ease-in-out infinite alternate}
+.star.big{width:4px;height:4px;box-shadow:0 0 6px 2px rgba(255,255,255,0.3)}
+@keyframes twinkle{0%{opacity:0.15}100%{opacity:0.9}}
+.app-wrapper{position:relative;z-index:10;max-width:480px;margin:0 auto;padding:20px 20px 30px;display:flex;flex-direction:column;align-items:center}
+.title{font-family:'Pacifico',cursive;font-size:2.6rem;background:linear-gradient(135deg,var(--pink),var(--purple),var(--sky),var(--gold));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;animation:shimmer 4s ease-in-out infinite;margin-bottom:2px;line-height:1.2}
+.greeting{font-size:0.95rem;color:var(--lavender);opacity:0.8;margin-bottom:6px;font-weight:400}
+.subtitle{font-size:0.85rem;color:var(--lavender);opacity:0.5;margin-bottom:20px;font-weight:400}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(to top,#0a0020 60%,transparent);padding:8px 0 0}
+.nav-inner{max-width:480px;margin:0 auto;display:flex;background:rgba(28,11,94,0.95);border:1.5px solid rgba(192,132,252,0.2);border-bottom:none;border-radius:20px 20px 0 0;padding:8px 4px 12px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:none;background:none;color:rgba(255,255,255,0.35);font-family:'Fredoka',sans-serif;font-size:0.6rem;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all 0.2s;letter-spacing:0.5px}
+.nav-btn .nav-icon{font-size:22px;line-height:1;transition:transform 0.2s}
+.nav-btn.active{color:var(--gold)}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.section{display:none;width:100%}
+.section.active{display:block;animation:fadeIn 0.3s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.streak-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;padding:10px 16px;background:rgba(255,215,0,0.06);border:1.5px solid rgba(255,215,0,0.15);border-radius:16px;width:100%}
+.streak-fire{font-size:20px}
+.streak-count{font-size:1.1rem;font-weight:700;color:var(--gold)}
+.streak-label{font-size:0.75rem;color:rgba(255,215,0,0.6);font-weight:500}
+.streak-best{font-size:0.7rem;color:rgba(255,255,255,0.25);margin-left:auto}
+.weekly-card{width:100%;padding:14px 18px;background:rgba(255,107,157,0.06);border:1.5px solid rgba(255,107,157,0.2);border-radius:16px;margin-bottom:16px}
+.weekly-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.weekly-title{font-size:0.8rem;font-weight:600;color:var(--pink);text-transform:uppercase;letter-spacing:1px}
+.weekly-desc{font-size:0.88rem;color:var(--lavender);margin-bottom:10px}
+.weekly-bar-track{height:8px;background:rgba(0,0,0,0.3);border-radius:4px;overflow:hidden}
+.weekly-bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--purple));border-radius:4px;transition:width 0.5s ease}
+.weekly-progress{font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:6px;text-align:right}
+.weekly-complete{color:var(--gold);font-weight:600}
+.input-panel{background:var(--card-bg);border:2px solid var(--card-border);border-radius:28px;padding:28px 22px;box-shadow:0 12px 40px rgba(0,0,0,0.5);width:100%}
+.input-label{font-size:1.1rem;color:var(--lavender);margin-bottom:20px;font-weight:500}
+.time-input-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px}
+.time-group{display:flex;flex-direction:column;align-items:center;gap:7px}
+.time-group label{font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--purple);opacity:0.6;font-weight:600}
+.time-stepper{display:flex;align-items:center;background:rgba(0,0,0,0.35);border:2px solid rgba(192,132,252,0.2);border-radius:18px;overflow:hidden}
+.step-btn{width:48px;height:58px;border:none;background:transparent;color:var(--purple);font-size:1.6rem;font-family:'Fredoka',sans-serif;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;transition:all 0.12s}
+.step-btn:active{background:rgba(192,132,252,0.25);transform:scale(0.9)}
+.time-display{width:54px;height:58px;display:flex;align-items:center;justify-content:center;font-size:1.9rem;font-weight:700;color:white;border-left:1px solid rgba(192,132,252,0.12);border-right:1px solid rgba(192,132,252,0.12)}
+.time-separator{font-size:2rem;font-weight:700;color:var(--purple);opacity:0.4;padding-bottom:20px}
+.magic-btn{border:none;padding:16px 36px;font-family:'Fredoka',sans-serif;font-size:1.15rem;font-weight:600;color:white;border-radius:60px;cursor:pointer;background:linear-gradient(135deg,var(--pink),#a855f7);box-shadow:0 4px 24px rgba(255,107,157,0.35);transition:all 0.3s;-webkit-tap-highlight-color:transparent;letter-spacing:0.3px;width:100%}
+.magic-btn:active{transform:scale(0.97)}
+.history-section{margin-top:20px}
+.history-label{font-size:0.7rem;color:var(--purple);opacity:0.5;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.history-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.history-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid rgba(192,132,252,0.12);background:rgba(0,0,0,0.3)}
+.history-dot.legendary{border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.1);box-shadow:0 0 10px rgba(255,215,0,0.15)}
+.history-dot.amazing{border-color:rgba(255,107,157,0.35);background:rgba(255,107,157,0.08)}
+.history-dot.encourage{border-color:rgba(125,211,252,0.3);background:rgba(125,211,252,0.06)}
+.journey-panel{background:var(--card-bg);border:2px solid var(--card-border);border-radius:28px;padding:26px 18px;box-shadow:0 12px 40px rgba(0,0,0,0.5);width:100%}
+.journey-title{font-family:'Pacifico',cursive;font-size:1.4rem;color:var(--lavender);margin-bottom:4px}
+.journey-subtitle{font-size:0.82rem;color:rgba(255,255,255,0.4);margin-bottom:20px}
+.path-container{position:relative;width:100%;height:440px;margin-bottom:18px}
+.path-track{position:absolute;left:50%;top:20px;bottom:20px;width:6px;transform:translateX(-50%);background:linear-gradient(to top,#2d1b69,#7c3aed 40%,#c084fc 70%,#ffd700);border-radius:3px;opacity:0.3}
+.path-node{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center;height:0}
+.node-marker{position:absolute;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;border:3px solid rgba(192,132,252,0.25);background:rgba(12,0,40,0.9);z-index:2}
+.node-marker.reached{border-color:var(--gold);background:rgba(255,215,0,0.15);box-shadow:0 0 10px rgba(255,215,0,0.25)}
+.node-info{position:absolute;display:flex;align-items:center;gap:6px}
+.node-info.left{right:calc(50% + 22px);flex-direction:row-reverse}
+.node-info.right{left:calc(50% + 22px)}
+.node-emoji-icon{font-size:1.1rem}
+.node-name{font-size:0.72rem;color:rgba(255,255,255,0.3);white-space:nowrap}
+.node-info.reached .node-name{color:rgba(255,255,255,0.75)}
+.path-character{position:absolute;left:50%;transform:translateX(-50%);font-size:32px;z-index:10;transition:top 0.8s;animation:charBob 2s ease-in-out infinite}
+@keyframes charBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+.destination-marker{position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:36px;animation:destGlow 2s ease-in-out infinite alternate}
+@keyframes destGlow{0%{filter:drop-shadow(0 0 12px rgba(255,215,0,0.25))}100%{filter:drop-shadow(0 0 28px rgba(255,215,0,0.55))}}
+.start-icon{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);font-size:22px}
+.journey-stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.j-stat{background:rgba(0,0,0,0.3);border:1.5px solid rgba(192,132,252,0.15);border-radius:14px;padding:10px 14px;text-align:center;min-width:85px}
+.j-stat-val{font-size:1.3rem;font-weight:700;line-height:1}
+.j-stat-val.gold{color:var(--gold)}.j-stat-val.pink{color:var(--pink)}.j-stat-val.sky{color:var(--sky)}
+.j-stat-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4);margin-top:3px}
+.journey-message{margin-top:16px;font-size:0.9rem;color:var(--lavender);opacity:0.7;line-height:1.5}
+.reset-btn{margin-top:14px;border:1.5px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.3);padding:8px 18px;border-radius:30px;font-family:'Fredoka',sans-serif;font-size:0.75rem;cursor:pointer}
+.collection-panel{background:var(--card-bg);border:2px solid var(--card-border);border-radius:28px;padding:24px 16px;width:100%}
+.collection-header{text-align:center;margin-bottom:16px}
+.collection-title{font-family:'Pacifico',cursive;font-size:1.4rem;color:var(--lavender)}
+.collection-count{font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:2px}
+.tier-filter{display:flex;gap:6px;margin-bottom:16px;justify-content:center}
+.tier-btn{padding:7px 14px;border-radius:20px;border:1.5px solid rgba(192,132,252,0.15);background:rgba(0,0,0,0.2);font-family:'Fredoka',sans-serif;font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tier-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08)}
+.creature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.creature-card{text-align:center;padding:14px 6px 10px;border-radius:18px;border:1.5px solid rgba(192,132,252,0.1);background:rgba(0,0,0,0.2);transition:all 0.2s}
+.creature-card.discovered{border-color:rgba(192,132,252,0.25);background:rgba(192,132,252,0.05)}
+.creature-card.discovered.legendary{border-color:rgba(255,215,0,0.3);background:rgba(255,215,0,0.05)}
+.creature-emoji-card{font-size:36px;line-height:1;margin-bottom:4px;display:block}
+.creature-card:not(.discovered) .creature-emoji-card{filter:brightness(0) saturate(0);opacity:0.15}
+.creature-name-card{font-size:0.62rem;color:rgba(255,255,255,0.5);line-height:1.3;min-height:28px;display:flex;align-items:center;justify-content:center}
+.creature-card:not(.discovered) .creature-name-card{color:rgba(255,255,255,0.2)}
+.creature-met-count{font-size:0.58rem;color:rgba(255,215,0,0.5);margin-top:2px}
+.badges-panel{background:var(--card-bg);border:2px solid var(--card-border);border-radius:28px;padding:24px 16px;width:100%}
+.badges-title{font-family:'Pacifico',cursive;font-size:1.4rem;color:var(--lavender);text-align:center;margin-bottom:4px}
+.badges-subtitle{font-size:0.78rem;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:18px}
+.badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.badge-item{text-align:center;padding:16px 8px 12px;border-radius:18px;border:1.5px solid rgba(192,132,252,0.08);background:rgba(0,0,0,0.2);transition:all 0.2s}
+.badge-item.earned{border-color:rgba(255,215,0,0.3);background:rgba(255,215,0,0.05)}
+.badge-icon{font-size:32px;line-height:1;margin-bottom:6px;display:block}
+.badge-item:not(.earned) .badge-icon{filter:brightness(0.3) saturate(0);opacity:0.4}
+.badge-name{font-size:0.65rem;color:rgba(255,255,255,0.5);line-height:1.3}
+.badge-item:not(.earned) .badge-name{color:rgba(255,255,255,0.2)}
+.badge-item.earned .badge-name{color:var(--lavender)}
+.anticipation-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at 50% 40%,#1a0855,#0a0020 70%)}
+.anticipation-overlay.show{display:flex}
+.antic-label{font-size:1rem;color:var(--lavender);opacity:0.7;margin-bottom:16px;animation:fadeIn 0.3s}
+.antic-meter{width:240px;height:16px;border-radius:8px;border:2px solid rgba(192,132,252,0.3);background:rgba(0,0,0,0.4);overflow:hidden;margin-bottom:12px}
+.antic-fill{height:100%;border-radius:6px;width:0;transition:width 0.6s ease}
+.antic-fill.legendary{background:linear-gradient(90deg,var(--purple),var(--gold))}
+.antic-fill.amazing{background:linear-gradient(90deg,var(--purple),var(--pink))}
+.antic-fill.encourage{background:linear-gradient(90deg,#334,var(--sky))}
+.antic-stars{font-size:28px;margin-bottom:10px;min-height:36px}
+.antic-msg{font-size:0.85rem;color:var(--lavender);opacity:0}
+.overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.overlay-bg{position:absolute;inset:0}
+.tier-legendary .overlay-bg{background:radial-gradient(ellipse at 50% 30%,#2a1060,#0a0020 65%)}
+.tier-amazing .overlay-bg{background:radial-gradient(ellipse at 50% 30%,#1f0850,#0a0020 65%)}
+.tier-encourage .overlay-bg{background:radial-gradient(ellipse at 50% 30%,#0d1040,#0a0020 65%)}
+.result-card{position:relative;z-index:2;background:linear-gradient(160deg,#1e0d62,#130440);border-radius:32px;padding:30px 22px 24px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);overflow-y:auto;max-height:90vh;-webkit-overflow-scrolling:touch;animation:cardBounce 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both}
+.tier-legendary .result-card{border:2px solid rgba(255,215,0,0.35);box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 40px rgba(255,215,0,0.1)}
+.tier-amazing .result-card{border:2px solid rgba(255,107,157,0.3)}
+.tier-encourage .result-card{border:2px solid rgba(125,211,252,0.25)}
+@keyframes cardBounce{from{opacity:0;transform:scale(0.6) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.creature-emoji-big{font-size:88px;line-height:1;display:block;margin-bottom:6px;animation:creatureAppear 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.3s both}
+.tier-legendary .creature-emoji-big{animation:creatureAppear 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.3s both,legendaryFloat 3s ease-in-out 1s infinite}
+@keyframes creatureAppear{0%{opacity:0;transform:scale(0) rotate(-15deg)}60%{transform:scale(1.12) rotate(4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes legendaryFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
+.creature-name-big{font-family:'Pacifico',cursive;font-size:1.5rem;margin-bottom:2px;line-height:1.3;animation:fadeUp 0.4s ease-out 0.55s both}
+.tier-legendary .creature-name-big{background:linear-gradient(135deg,var(--gold),#fff5c0,var(--gold));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent}
+.tier-amazing .creature-name-big{color:var(--pink)}
+.tier-encourage .creature-name-big{color:var(--sky)}
+.creature-rarity{font-size:0.65rem;text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;font-weight:600;animation:fadeUp 0.4s ease-out 0.65s both}
+.tier-legendary .creature-rarity{color:var(--gold)}
+.tier-amazing .creature-rarity{color:var(--pink)}
+.tier-encourage .creature-rarity{color:var(--mint)}
+.sleep-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:50px;font-size:0.85rem;font-weight:600;margin-bottom:10px;animation:fadeUp 0.4s ease-out 0.7s both}
+.tier-legendary .sleep-badge{background:rgba(255,215,0,0.12);border:1.5px solid rgba(255,215,0,0.25);color:var(--gold)}
+.tier-amazing .sleep-badge{background:rgba(255,107,157,0.12);border:1.5px solid rgba(255,107,157,0.25);color:var(--pink)}
+.tier-encourage .sleep-badge{background:rgba(125,211,252,0.08);border:1.5px solid rgba(125,211,252,0.2);color:var(--sky)}
+.creature-message{font-size:0.92rem;line-height:1.5;color:rgba(255,255,255,0.8);max-width:320px;margin:0 auto 8px;animation:fadeUp 0.4s ease-out 0.8s both}
+.rarity-count{font-size:0.75rem;color:rgba(255,255,255,0.35);margin-bottom:8px;animation:fadeUp 0.3s ease-out 0.85s both}
+.new-badge-alert{padding:8px 14px;border-radius:12px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);font-size:0.82rem;color:var(--gold);margin-bottom:8px;animation:fadeUp 0.4s ease-out 0.88s both}
+.journey-update{font-size:0.8rem;padding:9px 14px;border-radius:12px;margin-bottom:14px;animation:fadeUp 0.4s ease-out 0.9s both}
+.tier-legendary .journey-update{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.15);color:var(--gold)}
+.tier-amazing .journey-update{background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.12);color:var(--pink)}
+.tier-encourage .journey-update{background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.12);color:var(--sky)}
+.close-btn{border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:white;padding:12px 30px;border-radius:50px;font-family:'Fredoka',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;animation:fadeUp 0.4s ease-out 0.95s both;-webkit-tap-highlight-color:transparent}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.sparkle-container{position:fixed;inset:0;pointer-events:none;z-index:1001;overflow:hidden}
+.sparkle{position:absolute;border-radius:50%;pointer-events:none}
+.sparkle-star{position:absolute;pointer-events:none;animation:sparkleFloat 1.4s ease-out forwards}
+@keyframes sparkleFloat{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0) rotate(360deg)}}
+@media(max-width:400px){.time-display{width:44px;font-size:1.6rem}.step-btn{width:40px;height:50px;font-size:1.4rem}.app-wrapper{padding:16px 14px 26px}.title{font-size:2.1rem}}
+</style>
+</head>
+<body>
+<div class="starfield" id="starfield"></div>
+<div class="app-wrapper">
+<div class="title">Dreamland</div>
+<div class="greeting" id="greeting"></div>
+<div class="subtitle" id="subtitleText">🌙 Your magical sleep adventure 🌙</div>
+<div class="section active" id="sectionSleep">
+<div class="streak-bar" id="streakBar"><span class="streak-fire">🔥</span><span class="streak-count" id="streakCount">0</span><span class="streak-label">day streak</span><span class="streak-best" id="streakBest"></span></div>
+<div class="weekly-card" id="weeklyCard"><div class="weekly-header"><span>🎯</span><span class="weekly-title">Weekly Challenge</span></div><div class="weekly-desc" id="weeklyDesc"></div><div class="weekly-bar-track"><div class="weekly-bar-fill" id="weeklyFill"></div></div><div class="weekly-progress" id="weeklyProgress"></div></div>
+<div class="input-panel">
+<div class="input-label">⭐ How long did you sleep? ⭐</div>
+<div class="time-input-row"><div class="time-group"><label>Hours</label><div class="time-stepper"><button class="step-btn" id="hDec">−</button><div class="time-display" id="hoursDisplay">10</div><button class="step-btn" id="hInc">+</button></div></div><div class="time-separator">:</div><div class="time-group"><label>Minutes</label><div class="time-stepper"><button class="step-btn" id="mDec">−</button><div class="time-display" id="minsDisplay">00</div><button class="step-btn" id="mInc">+</button></div></div></div>
+<button class="magic-btn" id="revealBtn">✨ Reveal My Dream Friend! ✨</button>
+<div class="history-section" id="historySection" style="display:none"><div class="history-label">This Week</div><div class="history-row" id="historyRow"></div></div>
+</div></div>
+<div class="section" id="sectionJourney"><div class="journey-panel"><div class="journey-title" id="journeyTitle"></div><div class="journey-subtitle" id="journeySub"></div><div class="path-container" id="pathContainer"><div class="path-track"></div><div class="destination-marker" id="destMarker">🌈</div><div class="start-icon">🏠</div></div><div class="journey-stats" id="journeyStats"></div><div class="journey-message" id="journeyMessage"></div><button class="reset-btn" id="resetBtn">Reset Journey</button></div></div>
+<div class="section" id="sectionCollection"><div class="collection-panel"><div class="collection-header"><div class="collection-title">Dream Friends</div><div class="collection-count" id="collectionCount"></div></div><div class="tier-filter"><button class="tier-btn active" data-tier="all">All</button><button class="tier-btn" data-tier="legendary">👑</button><button class="tier-btn" data-tier="amazing">🌟</button><button class="tier-btn" data-tier="encourage">💤</button></div><div class="creature-grid" id="creatureGrid"></div></div></div>
+<div class="section" id="sectionBadges"><div class="badges-panel"><div class="badges-title">Trophy Case</div><div class="badges-subtitle" id="badgeCount"></div><div class="badge-grid" id="badgeGrid"></div></div></div>
+</div>
+<div class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-tab="sleep"><span class="nav-icon">🌙</span>Sleep</button><button class="nav-btn" data-tab="journey"><span class="nav-icon">🗺️</span>Journey</button><button class="nav-btn" data-tab="collection"><span class="nav-icon">📖</span>Friends</button><button class="nav-btn" data-tab="badges"><span class="nav-icon">🏆</span>Badges</button></div></div>
+<div class="anticipation-overlay" id="anticOverlay"><div class="antic-label">Checking your sleep magic...</div><div class="antic-stars" id="anticStars"></div><div class="antic-meter"><div class="antic-fill" id="anticFill"></div></div><div class="antic-msg" id="anticMsg"></div></div>
+<div class="overlay" id="overlay"><div class="overlay-bg"></div><div class="sparkle-container" id="sparkleContainer"></div><div class="result-card"><span class="creature-emoji-big" id="creatureEmoji"></span><div class="creature-name-big" id="creatureName"></div><div class="creature-rarity" id="creatureRarity"></div><div class="sleep-badge" id="sleepBadge"></div><div class="creature-message" id="creatureMessage"></div><div class="rarity-count" id="rarityCount"></div><div class="new-badge-alert" id="newBadgeAlert" style="display:none"></div><div class="journey-update" id="journeyUpdate"></div><button class="close-btn" id="closeBtn">Sweet Dreams! 🌙</button></div></div>
+<script>
+(function(){"use strict";
+var mem={},canLS=false;
+try{var tk='__dl__';localStorage.setItem(tk,'1');localStorage.removeItem(tk);canLS=true}catch(e){}
+function sSet(k,v){var s=JSON.stringify(v);mem[k]=s;if(canLS)try{localStorage.setItem(k,s)}catch(e){}}
+function sGet(k){var r=null;if(canLS)try{r=localStorage.getItem(k)}catch(e){}if(!r)r=mem[k]||null;if(!r)return null;try{return JSON.parse(r)}catch(e){return null}}
+var hours=10,mins=0,TOTAL_STEPS=10;
+function getDefault(){return{history:[],position:0,journeysCompleted:0,journeyTheme:0,collection:{},badges:[],streak:{current:0,best:0,lastDate:''}}}
+function getData(){var d=sGet('dreamland_v4');if(!d){d=getDefault();var old=sGet('dreamland_v3');if(old){d.history=old.history||[];d.position=old.position||0;d.journeysCompleted=old.journeysCompleted||0}}if(!d.collection)d.collection={};if(!d.badges)d.badges=[];if(!d.streak)d.streak={current:0,best:0,lastDate:''};if(d.journeyTheme===undefined)d.journeyTheme=0;return d}
+function save(d){sSet('dreamland_v4',d)}
+var CREATURES={legendary:[
+{id:'l0',emoji:'🦄',name:'Rainbow Unicorn Princess',msg:"INCREDIBLE! The Rainbow Unicorn Princess only visits the BEST sleepers!"},
+{id:'l1',emoji:'🐉',name:'Crystal Stardust Dragon',msg:"WOW! The legendary Crystal Dragon has chosen YOU!"},
+{id:'l2',emoji:'🧜‍♀️',name:'Diamond Mermaid Queen',msg:"AMAZING! The Diamond Mermaid Queen swam up from the Dream Ocean just for you!"},
+{id:'l3',emoji:'🦋',name:'Aurora Butterfly Empress',msg:"SPECTACULAR! The Aurora Butterfly blessed you with her rainbow wings!"},
+{id:'l4',emoji:'🦚',name:'Cosmic Peacock Princess',msg:"UNBELIEVABLE! The Cosmic Peacock spread her starlight feathers just for you!"},
+{id:'l5',emoji:'🦢',name:'Enchanted Swan Fairy',msg:"MAGICAL! The Enchanted Swan danced through the clouds to celebrate YOUR sleep!"},
+{id:'l6',emoji:'🦁',name:'Celestial Lion Queen',msg:"MAJESTIC! The Celestial Lion Queen crowns you Princess of Dreamland!"},
+{id:'l7',emoji:'🐴',name:'Stardust Pegasus',msg:"GLORIOUS! The Stardust Pegasus galloped across the Milky Way!"},
+{id:'l8',emoji:'🦩',name:'Crystal Flamingo Duchess',msg:"DAZZLING! The Crystal Flamingo glows with a thousand colours!"},
+{id:'l9',emoji:'🐋',name:'Dreamwave Whale Princess',msg:"BREATHTAKING! The Dreamwave Whale sang the most beautiful lullaby for YOU!"},
+{id:'l10',emoji:'🕊️',name:'Golden Phoenix of Dreams',msg:"EXTRAORDINARY! The Golden Phoenix rises from stardust to honour YOU!"},
+{id:'l11',emoji:'🐺',name:'Moonlight Wolf Guardian',msg:"PHENOMENAL! The Moonlight Wolf only appears under the brightest dream moon!"}
+],amazing:[
+{id:'a0',emoji:'🐱',name:'Sparkle Cloud Kitten',msg:"Wonderful sleep! A tiny bit more and you could unlock a LEGENDARY friend!"},
+{id:'a1',emoji:'🐰',name:'Moonbeam Bunny',msg:"Great sleep! The Moonbeam Bunny hopped through the stars to say well done!"},
+{id:'a2',emoji:'🦊',name:'Blossom Fox',msg:"Lovely sleep! The Blossom Fox brought you flowers from the Dream Garden!"},
+{id:'a3',emoji:'🐬',name:'Pearl Dream Dolphin',msg:"Brilliant! The Pearl Dolphin splashed through the Dream Sea!"},
+{id:'a4',emoji:'🦉',name:'Sugar Plum Owl',msg:"Fantastic sleep! The Sugar Plum Owl says your dreams were beautiful!"},
+{id:'a5',emoji:'🦌',name:'Dewdrop Deer',msg:"Beautiful sleep! The Dewdrop Deer tiptoed through the enchanted forest!"},
+{id:'a6',emoji:'🐶',name:'Starlight Puppy',msg:"Awesome sleep! The Starlight Puppy is wagging her tail SO fast!"},
+{id:'a7',emoji:'🐼',name:'Cotton Candy Panda',msg:"Sweet sleep! The Cotton Candy Panda saved you some dream marshmallows!"},
+{id:'a8',emoji:'🦜',name:'Rainbow Parrot of Joy',msg:"Happy sleep! The Rainbow Parrot is singing a celebration song for you!"},
+{id:'a9',emoji:'🐨',name:'Lavender Dream Koala',msg:"Cosy sleep! The Lavender Koala gave you the biggest cuddle!"},
+{id:'a10',emoji:'🦔',name:'Twinkling Hedgehog',msg:"Lovely! The Twinkling Hedgehog curled up in stardust just for you!"},
+{id:'a11',emoji:'🐙',name:'Bubble Octopus',msg:"Great job! The Bubble Octopus blew rainbow bubbles to celebrate!"}
+],encourage:[
+{id:'e0',emoji:'🐻',name:'Sleepy Honey Bear',msg:"Big warm hug from the Honey Bear! Try for a super long sleep tonight!"},
+{id:'e1',emoji:'🐹',name:'Cozy Sunset Hamster',msg:"Get an early night tonight and something REALLY magical might happen!"},
+{id:'e2',emoji:'🐢',name:'Gentle Starshell Turtle',msg:"Slow and steady! Try an extra-long sleep tonight!"},
+{id:'e3',emoji:'🐑',name:'Dreamy Cloud Lamb',msg:"Snuggle up extra early tonight and tomorrow's friend could be SUPER rare!"},
+{id:'e4',emoji:'🐧',name:'Snuggly Snow Penguin',msg:"The Penguin wrapped you in a cozy blanket! Early bedtime tonight!"},
+{id:'e5',emoji:'🐥',name:'Sunny Chick',msg:"Tomorrow is a brand new chance! The Sunny Chick believes in you!"},
+{id:'e6',emoji:'🐾',name:'Twilight Cuddle Cat',msg:"Every great dreamer has off nights! Sleep longer tomorrow!"},
+{id:'e7',emoji:'🐿️',name:'Acorn Dream Squirrel',msg:"Early bedtime tonight makes tomorrow extra special!"}
+]};
+var ALL_CREATURES=[];
+['legendary','amazing','encourage'].forEach(function(t){CREATURES[t].forEach(function(c){c.tier=t;ALL_CREATURES.push(c)})});
+function pickCreature(tier){var list=CREATURES[tier];var d=new Date();var start=new Date(d.getFullYear(),0,0);var doy=Math.floor((d-start)/864e5);var seed=d.getFullYear()*400+doy;var off=tier==='legendary'?0:tier==='amazing'?5:3;return list[(seed+off)%list.length]}
+var THEMES=[
+{name:'Journey to the Rainbow',dest:'🌈',sub:'Great sleeps move you up the path! 🌟',nodes:[{e:'🏠',n:'Home',s:'right'},{e:'🌸',n:'Blossom Meadow',s:'left'},{e:'🦋',n:'Butterfly Bridge',s:'right'},{e:'🍄',n:'Mushroom Grove',s:'left'},{e:'🌊',n:'Crystal Stream',s:'right'},{e:'🏰',n:'Fairy Castle',s:'left'},{e:'🌺',n:'Enchanted Garden',s:'right'},{e:'⭐',n:'Star Hollow',s:'left'},{e:'🦄',n:'Unicorn Peak',s:'right'},{e:'☁️',n:'Cloud Kingdom',s:'left'},{e:'🌈',n:"Rainbow's End!",s:'right'}]},
+{name:'Voyage to the Moon',dest:'🌕',sub:'Dream your way to the moon! 🚀',nodes:[{e:'🏠',n:'Home',s:'right'},{e:'🌻',n:'Sunflower Launch',s:'left'},{e:'🎈',n:'Balloon Heights',s:'right'},{e:'🦅',n:'Eagle Pass',s:'left'},{e:'☁️',n:'Cloud Nine',s:'right'},{e:'✈️',n:'Sky Highway',s:'left'},{e:'⭐',n:'Star Station',s:'right'},{e:'🪐',n:'Planet Rest Stop',s:'left'},{e:'🌌',n:'Milky Way Lane',s:'right'},{e:'🛸',n:'Space Dock',s:'left'},{e:'🌕',n:'Moon Palace!',s:'right'}]},
+{name:'Under the Sea',dest:'🧜‍♀️',sub:'Dive deep into dreamland! 🐚',nodes:[{e:'🏖️',n:'Sandy Shore',s:'right'},{e:'🐚',n:'Shell Cove',s:'left'},{e:'🪸',n:'Coral Garden',s:'right'},{e:'🐠',n:'Clownfish Alley',s:'left'},{e:'🫧',n:'Bubble Cave',s:'right'},{e:'🐢',n:'Turtle Reef',s:'left'},{e:'🐙',n:'Octopus Grotto',s:'right'},{e:'💎',n:'Diamond Deep',s:'left'},{e:'🐋',n:'Whale Highway',s:'right'},{e:'🏰',n:'Pearl Palace',s:'left'},{e:'🧜‍♀️',n:'Mermaid Throne!',s:'right'}]},
+{name:'Enchanted Forest',dest:'🧚',sub:'Tiptoe through the fairy woods! 🌿',nodes:[{e:'🏕️',n:'Camp Cozy',s:'right'},{e:'🌿',n:'Fern Path',s:'left'},{e:'🍄',n:'Toadstool Ring',s:'right'},{e:'🦊',n:'Fox Hollow',s:'left'},{e:'🌳',n:'Ancient Oak',s:'right'},{e:'🦉',n:'Owl Tower',s:'left'},{e:'🌸',n:'Pixie Pond',s:'right'},{e:'🦌',n:'Deer Glade',s:'left'},{e:'🌺',n:'Rose Maze',s:'right'},{e:'🏰',n:'Tree Castle',s:'left'},{e:'🧚',n:'Fairy Queen!',s:'right'}]}
+];
+var BADGE_DEFS=[
+{id:'first_log',icon:'🌙',name:'First Dream',desc:'Log your first sleep'},
+{id:'first_legendary',icon:'👑',name:'Legendary!',desc:'First Legendary sleep'},
+{id:'first_amazing',icon:'💖',name:'Amazing!',desc:'First Amazing sleep'},
+{id:'streak_3',icon:'🔥',name:'3-Day Streak',desc:'Log 3 days in a row'},
+{id:'streak_7',icon:'💫',name:'7-Day Streak',desc:'Log 7 days in a row'},
+{id:'streak_14',icon:'⚡',name:'14-Day Streak',desc:'14 days in a row'},
+{id:'streak_30',icon:'🌟',name:'30-Day Streak',desc:'30 days in a row!'},
+{id:'collect_5',icon:'📖',name:'5 Friends',desc:'Discover 5 friends'},
+{id:'collect_10',icon:'📚',name:'10 Friends',desc:'Discover 10 friends'},
+{id:'collect_20',icon:'🌈',name:'20 Friends',desc:'Discover 20 friends'},
+{id:'collect_all',icon:'✨',name:'Dream Em All',desc:'Every friend found'},
+{id:'journey_1',icon:'🗺️',name:'First Journey',desc:'Complete a journey'},
+{id:'journey_3',icon:'🌍',name:'World Explorer',desc:'Complete 3 journeys'},
+{id:'legendary_5',icon:'💎',name:'5 Legendaries',desc:'5 legendary sleeps'},
+{id:'legendary_10',icon:'🏆',name:'10 Legendaries',desc:'10 legendary sleeps'},
+{id:'weekly_1',icon:'🎯',name:'Challenge Champ',desc:'Complete a weekly challenge'}
+];
+function checkBadges(data){var nb=[];var e=data.badges;function a(id){if(e.indexOf(id)===-1){e.push(id);nb.push(id)}}
+if(data.history.length>=1)a('first_log');
+if(data.history.some(function(h){return h.tier==='legendary'}))a('first_legendary');
+if(data.history.some(function(h){return h.tier==='amazing'}))a('first_amazing');
+var s=data.streak;if(s.current>=3)a('streak_3');if(s.current>=7)a('streak_7');if(s.current>=14)a('streak_14');if(s.current>=30)a('streak_30');
+var disc=Object.keys(data.collection).length;if(disc>=5)a('collect_5');if(disc>=10)a('collect_10');if(disc>=20)a('collect_20');if(disc>=ALL_CREATURES.length)a('collect_all');
+if(data.journeysCompleted>=1)a('journey_1');if(data.journeysCompleted>=3)a('journey_3');
+var lc=data.history.filter(function(h){return h.tier==='legendary'}).length;if(lc>=5)a('legendary_5');if(lc>=10)a('legendary_10');
+var wk=getWeekly(data);if(wk.done)a('weekly_1');data.badges=e;return nb}
+function updateStreak(data){var today=new Date().toISOString().split('T')[0];var s=data.streak;if(s.lastDate===today)return;var y=new Date();y.setDate(y.getDate()-1);var yStr=y.toISOString().split('T')[0];if(s.lastDate===yStr)s.current+=1;else if(s.lastDate!==today)s.current=1;if(s.current>s.best)s.best=s.current;s.lastDate=today}
+function getMonday(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);return new Date(d.getFullYear(),d.getMonth(),diff).toISOString().split('T')[0]}
+function getWeekly(data){var mon=getMonday();var wl=0;for(var i=0;i<data.history.length;i++){if(data.history[i].date>=mon&&data.history[i].tier==='legendary')wl++}return{count:wl,target:4,done:wl>=4}}
+function getGreeting(){var h=new Date().getHours();if(h<12)return'Good morning, sleepyhead! ☀️';if(h<17)return'Good afternoon, dreamer! 🌤️';if(h<20)return'Good evening! Bedtime is getting closer! 🌅';return'Nearly bedtime! Sweet dreams soon! 🌙'}
+var hoursEl=document.getElementById('hoursDisplay'),minsEl=document.getElementById('minsDisplay');
+function updateDisplay(){hoursEl.textContent=String(hours);minsEl.textContent=mins<10?'0'+mins:String(mins)}
+function adjustTime(f,d){if(f==='hours')hours=Math.max(0,Math.min(14,hours+d));else{mins+=d;if(mins>=60)mins=0;if(mins<0)mins=55}updateDisplay()}
+function switchTab(tab){var m={sleep:'sectionSleep',journey:'sectionJourney',collection:'sectionCollection',badges:'sectionBadges'};document.querySelectorAll('.section').forEach(function(s){s.className='section'});document.querySelectorAll('.nav-btn').forEach(function(b){b.className='nav-btn'});document.getElementById(m[tab]).className='section active';document.querySelectorAll('.nav-btn').forEach(function(b){if(b.getAttribute('data-tab')===tab)b.className='nav-btn active'});if(tab==='journey')renderJourney();if(tab==='collection')renderCollection();if(tab==='badges')renderBadges()}
+function showAnticipation(tier,cb){var ov=document.getElementById('anticOverlay'),fill=document.getElementById('anticFill'),stars=document.getElementById('anticStars'),msg=document.getElementById('anticMsg');ov.className='anticipation-overlay show';fill.className='antic-fill '+tier;fill.style.width='0';stars.textContent='';msg.style.opacity='0';var pcts=[20,45,70,90,100],emojis=['⭐','⭐','⭐','🌟','✨'],msgs={legendary:'OH WOW...',amazing:'Looking good!',encourage:"Let's see..."};var i=0;function step(){if(i>=pcts.length){msg.textContent=msgs[tier];msg.style.opacity='1';setTimeout(function(){ov.className='anticipation-overlay';cb()},600);return}fill.style.width=pcts[i]+'%';stars.textContent+=emojis[i]+' ';i++;setTimeout(step,350)}setTimeout(step,300)}
+function revealCreature(){var t=hours*60+mins;var tier=t>=615?'legendary':t>=585?'amazing':'encourage';showAnticipation(tier,function(){doReveal(tier)})}
+function doReveal(tier){var cr=pickCreature(tier),ov=document.getElementById('overlay');ov.className='overlay show tier-'+tier;
+document.getElementById('creatureEmoji').textContent=cr.emoji;document.getElementById('creatureName').textContent=cr.name;document.getElementById('creatureMessage').textContent=cr.msg;
+var ts=hours+'h '+(mins>0?mins+'m':'');
+if(tier==='legendary'){document.getElementById('creatureRarity').textContent='⭐ LEGENDARY DREAM FRIEND ⭐';document.getElementById('sleepBadge').textContent='👑 '+ts+' of magical sleep!'}
+else if(tier==='amazing'){document.getElementById('creatureRarity').textContent='💫 AMAZING DREAM FRIEND 💫';document.getElementById('sleepBadge').textContent='🌟 '+ts+' of great sleep!'}
+else{document.getElementById('creatureRarity').textContent='💤 SLEEPY FRIEND 💤';document.getElementById('sleepBadge').textContent='🌙 '+ts+' of sleep'}
+var data=getData(),today=new Date().toISOString().split('T')[0],idx=-1;
+for(var i=0;i<data.history.length;i++){if(data.history[i].date===today){idx=i;break}}
+var entry={tier:tier,date:today,hours:hours,mins:mins,creatureId:cr.id};
+if(idx>=0)data.history[idx]=entry;else data.history.push(entry);if(data.history.length>60)data.history=data.history.slice(-60);
+if(!data.collection[cr.id])data.collection[cr.id]={count:0,firstSeen:today};data.collection[cr.id].count+=1;
+var mc=data.collection[cr.id].count;var rc=document.getElementById('rarityCount');
+if(mc===1)rc.textContent='✨ NEW friend discovered!';else rc.textContent="You've met "+cr.name+' '+mc+' time'+(mc>1?'s':'')+'!';
+updateStreak(data);
+var move=tier==='legendary'?2:tier==='amazing'?1:-1;data.position=Math.max(0,Math.min(TOTAL_STEPS,data.position+move));
+var jm='';if(data.position>=TOTAL_STEPS){data.journeysCompleted=(data.journeysCompleted||0)+1;data.position=0;data.journeyTheme=(data.journeyTheme+1)%THEMES.length;jm='🌈🎉 JOURNEY COMPLETE! Adventure #'+data.journeysCompleted+' done! A new world awaits!'}
+else if(move>0)jm='⬆️ Moved '+move+' step'+(move>1?'s':'')+' up! ('+data.position+'/'+TOTAL_STEPS+')';
+else if(move<0&&data.position>0)jm='💤 Slipped back… but tomorrow you can leap forward! ('+data.position+'/'+TOTAL_STEPS+')';
+else jm='💤 A good sleep tomorrow will get you climbing again!';
+document.getElementById('journeyUpdate').textContent=jm;
+var nb=checkBadges(data),ba=document.getElementById('newBadgeAlert');
+if(nb.length>0){var names=nb.map(function(bid){for(var i=0;i<BADGE_DEFS.length;i++){if(BADGE_DEFS[i].id===bid)return BADGE_DEFS[i].icon+' '+BADGE_DEFS[i].name}return''});ba.textContent='🏆 New badge'+(nb.length>1?'s':'')+': '+names.join(', ')+'!';ba.style.display='block'}else ba.style.display='none';
+save(data);
+if(tier==='legendary'){burstSparkles(60,['#ffd700','#fff8dc','#ffb6c1','#c084fc','#ff6b9d']);setTimeout(function(){burstSparkles(35,['#ffd700','#fff8dc','#c084fc'])},400);setTimeout(function(){burstSparkles(20,['#ffd700','#ff6b9d'])},800)}
+else if(tier==='amazing')burstSparkles(30,['#ff6b9d','#c084fc','#e0b0ff','#fff']);
+else burstSparkles(12,['#7dd3fc','#6ee7b7','#e0b0ff']);
+renderHistory();renderStreak();renderWeekly()}
+function closeOverlay(){var ov=document.getElementById('overlay');ov.style.opacity='0';ov.style.transition='opacity 0.3s';setTimeout(function(){ov.className='overlay';ov.style.opacity='';ov.style.transition='';document.getElementById('sparkleContainer').innerHTML=''},300)}
+function burstSparkles(count,colors){var c=document.getElementById('sparkleContainer'),cx=window.innerWidth/2,cy=window.innerHeight*0.25,emojis=['✨','⭐','💫','🌟','💖','🌸','🦋','💜','👑'];for(var i=0;i<count;i++){var el=document.createElement('div'),ue=Math.random()>0.5,angle=(Math.PI*2*i/count)+(Math.random()-0.5)*0.6,dist=60+Math.random()*200,dx=Math.cos(angle)*dist,dy=Math.sin(angle)*dist-30;if(ue){el.className='sparkle-star';el.textContent=emojis[Math.floor(Math.random()*emojis.length)];el.style.fontSize=(12+Math.random()*18)+'px'}else{el.className='sparkle';var col=colors[Math.floor(Math.random()*colors.length)],sz=(3+Math.random()*6)+'px';el.style.background=col;el.style.width=sz;el.style.height=sz;el.style.boxShadow='0 0 '+(4+Math.random()*5)+'px '+col}el.style.left=cx+'px';el.style.top=cy+'px';el.style.setProperty('--dx',dx+'px');el.style.setProperty('--dy',dy+'px');el.style.animation='sparkleFloat '+(1+Math.random()*0.7)+'s ease-out '+(Math.random()*0.3)+'s forwards';c.appendChild(el);(function(e){setTimeout(function(){if(e.parentNode)e.parentNode.removeChild(e)},2200)})(el)}}
+function renderHistory(){var data=getData(),h=data.history.slice(-7),row=document.getElementById('historyRow'),sec=document.getElementById('historySection');if(h.length===0){sec.style.display='none';return}sec.style.display='block';row.innerHTML='';var icons={legendary:'👑',amazing:'🌟',encourage:'💤'};for(var i=0;i<h.length;i++){var dot=document.createElement('div');dot.className='history-dot '+h[i].tier;dot.textContent=icons[h[i].tier]||'';row.appendChild(dot)}}
+function renderStreak(){var data=getData();document.getElementById('streakCount').textContent=data.streak.current||0;var b=data.streak.best||0;document.getElementById('streakBest').textContent=b>0?'Best: '+b:''}
+function renderWeekly(){var data=getData(),wk=getWeekly(data);document.getElementById('weeklyDesc').textContent='Get '+wk.target+' Legendary sleeps this week!';document.getElementById('weeklyFill').style.width=Math.min(100,wk.count/wk.target*100)+'%';if(wk.done)document.getElementById('weeklyProgress').innerHTML='<span class="weekly-complete">✅ CHALLENGE COMPLETE!</span>';else document.getElementById('weeklyProgress').textContent=wk.count+' / '+wk.target}
+function renderJourney(){var data=getData(),ti=data.journeyTheme||0,theme=THEMES[ti];document.getElementById('journeyTitle').textContent=theme.name;document.getElementById('journeySub').textContent=theme.sub;document.getElementById('destMarker').textContent=theme.dest;var con=document.getElementById('pathContainer'),old=con.querySelectorAll('.path-node,.path-character');for(var i=0;i<old.length;i++)old[i].parentNode.removeChild(old[i]);var pad=30,totalH=420,nodes=theme.nodes;for(var i=0;i<nodes.length;i++){var nd=nodes[i],pct=1-(i/TOTAL_STEPS),top=pad+pct*(totalH-pad*2),wrap=document.createElement('div');wrap.className='path-node';wrap.style.top=top+'px';var mk=document.createElement('div');mk.className='node-marker'+(i<=data.position?' reached':'');wrap.appendChild(mk);var info=document.createElement('div');info.className='node-info '+nd.s+(i<=data.position?' reached':'');var em=document.createElement('span');em.className='node-emoji-icon';em.textContent=nd.e;info.appendChild(em);var nm=document.createElement('span');nm.className='node-name';nm.textContent=nd.n;info.appendChild(nm);wrap.appendChild(info);con.appendChild(wrap)}var cp=1-(data.position/TOTAL_STEPS),ct=pad+cp*(totalH-pad*2)-16,ce=document.createElement('div');ce.className='path-character';ce.style.top=ct+'px';ce.textContent='👧';con.appendChild(ce);var lc=data.history.filter(function(h){return h.tier==='legendary'}).length;document.getElementById('journeyStats').innerHTML='<div class="j-stat"><div class="j-stat-val gold">'+data.position+'/'+TOTAL_STEPS+'</div><div class="j-stat-label">Progress</div></div><div class="j-stat"><div class="j-stat-val pink">'+lc+'</div><div class="j-stat-label">Legendary</div></div><div class="j-stat"><div class="j-stat-val sky">'+(data.journeysCompleted||0)+'</div><div class="j-stat-label">Complete</div></div>';var msg=document.getElementById('journeyMessage');if(data.history.length===0)msg.textContent="Start your adventure! Log your sleep! 🌈";else if(data.position>=8)msg.textContent="SO CLOSE! Keep up those amazing sleeps! ✨";else if(data.position>=5)msg.textContent="Past halfway! The end is getting closer! 💫";else if(data.position>=2)msg.textContent="Great progress! Keep sleeping well! 🌟";else msg.textContent="Every journey starts with a good night's sleep! 💪"}
+var colFilter='all';
+function renderCollection(f){if(f)colFilter=f;var data=getData(),grid=document.getElementById('creatureGrid');grid.innerHTML='';var list=colFilter==='all'?ALL_CREATURES:CREATURES[colFilter]||ALL_CREATURES;var disc=Object.keys(data.collection).length;document.getElementById('collectionCount').textContent=disc+' / '+ALL_CREATURES.length+' discovered';for(var i=0;i<list.length;i++){var c=list[i],found=!!data.collection[c.id],card=document.createElement('div');card.className='creature-card'+(found?' discovered':'')+(found&&c.tier==='legendary'?' legendary':'');var em=document.createElement('span');em.className='creature-emoji-card';em.textContent=c.emoji;card.appendChild(em);var nm=document.createElement('div');nm.className='creature-name-card';nm.textContent=found?c.name:'???';card.appendChild(nm);if(found){var ct=document.createElement('div');ct.className='creature-met-count';ct.textContent='Met '+data.collection[c.id].count+'x';card.appendChild(ct)}grid.appendChild(card)}document.querySelectorAll('.tier-btn').forEach(function(b){b.className=b.getAttribute('data-tier')===colFilter?'tier-btn active':'tier-btn'})}
+function renderBadges(){var data=getData(),grid=document.getElementById('badgeGrid');grid.innerHTML='';document.getElementById('badgeCount').textContent=data.badges.length+' / '+BADGE_DEFS.length+' earned';for(var i=0;i<BADGE_DEFS.length;i++){var b=BADGE_DEFS[i],earned=data.badges.indexOf(b.id)!==-1,item=document.createElement('div');item.className='badge-item'+(earned?' earned':'');var ic=document.createElement('span');ic.className='badge-icon';ic.textContent=b.icon;item.appendChild(ic);var nm=document.createElement('div');nm.className='badge-name';nm.textContent=earned?b.name:b.desc;item.appendChild(nm);grid.appendChild(item)}}
+function createStarfield(){var sf=document.getElementById('starfield');for(var i=0;i<65;i++){var s=document.createElement('div');s.className='star'+(Math.random()>0.88?' big':'');s.style.left=(Math.random()*100)+'%';s.style.top=(Math.random()*100)+'%';s.style.setProperty('--dur',(1.5+Math.random()*3)+'s');s.style.animationDelay=(Math.random()*3)+'s';sf.appendChild(s)}}
+document.getElementById('hDec').addEventListener('click',function(){adjustTime('hours',-1)});
+document.getElementById('hInc').addEventListener('click',function(){adjustTime('hours',1)});
+document.getElementById('mDec').addEventListener('click',function(){adjustTime('mins',-5)});
+document.getElementById('mInc').addEventListener('click',function(){adjustTime('mins',5)});
+document.getElementById('revealBtn').addEventListener('click',revealCreature);
+document.getElementById('closeBtn').addEventListener('click',closeOverlay);
+document.getElementById('resetBtn').addEventListener('click',function(){if(confirm("Start a brand new journey?")){var d=getData();d.position=0;save(d);renderJourney()}});
+document.querySelectorAll('.nav-btn').forEach(function(b){b.addEventListener('click',function(){switchTab(b.getAttribute('data-tab'))})});
+document.querySelectorAll('.tier-btn').forEach(function(b){b.addEventListener('click',function(){renderCollection(b.getAttribute('data-tier'))})});
+createStarfield();document.getElementById('greeting').textContent=getGreeting();renderHistory();renderStreak();renderWeekly();updateDisplay();
+})();
+</script>
+</body>
+</html>
