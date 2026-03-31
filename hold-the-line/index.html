@@ -84,21 +84,21 @@ body{background:#0b1120}
 .point-pop{position:absolute;font-weight:800;font-size:15px;color:#4ade80;z-index:30;pointer-events:none;animation:floatUp 0.8s ease forwards}
 @keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-25px);opacity:0}}
 
-.dir-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:3;pointer-events:none;opacity:0.35;display:flex;flex-direction:column;align-items:center;gap:2px}
-.dir-label{font-size:7px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.6);writing-mode:vertical-rl;text-orientation:mixed}
+.dir-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:3;pointer-events:none;opacity:0.7;display:flex;flex-direction:column;align-items:center;gap:3px}
+.dir-label{font-size:10px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,0.8);writing-mode:vertical-rl;text-orientation:mixed}
 
 .hint-bar{height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hint-text{font-size:13px;color:#64748b;animation:fadeIn 0.4s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
 /* FREEZE */
-.freeze-overlay{position:absolute;inset:0;background:rgba(11,17,32,0.65);z-index:25;animation:fadeIn 0.3s}
-.freeze-prompt{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:15px;font-weight:700;color:#fff;z-index:30;text-shadow:0 2px 10px rgba(0,0,0,0.6)}
-.freeze-opt{position:absolute;transform:translate(-50%,-50%);z-index:30;cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:4px}
-.freeze-ring{width:54px;height:54px;border-radius:50%;border:3px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);transition:all 0.3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.freeze-overlay{position:absolute;inset:0;background:rgba(11,17,32,0.65);z-index:25;pointer-events:none;animation:fadeIn 0.3s}
+.freeze-prompt{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:15px;font-weight:700;color:#fff;z-index:30;text-shadow:0 2px 10px rgba(0,0,0,0.6);pointer-events:none}
+.freeze-opt{position:absolute;transform:translate(-50%,-50%);z-index:30;cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px}
+.freeze-ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);transition:all 0.3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .freeze-ring.correct{border-color:#4ade80;background:rgba(74,222,128,0.3)}
 .freeze-ring.wrong{border-color:#ef4444;background:rgba(239,68,68,0.2);opacity:0.4}
-.freeze-lbl{font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.8);background:rgba(0,0,0,0.55);padding:2px 10px;border-radius:8px;white-space:nowrap;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.freeze-lbl{font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.8);background:rgba(0,0,0,0.6);padding:3px 12px;border-radius:8px;white-space:nowrap;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 
 /* FEEDBACK */
 .fb-card{position:absolute;bottom:48px;left:12px;right:12px;background:rgba(11,17,32,0.96);border-radius:16px;padding:20px 22px;z-index:35;animation:slideUp 0.3s ease;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -142,7 +142,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},
 ballPath:[{x:38,y:55,t:0},{x:38,y:55,t:11000}],
 ghostPath:[{x:35,y:62,t:0},{x:36,y:62,t:2000},{x:37,y:64,t:5000},{x:37,y:66,t:8000},{x:37,y:66,t:11000}],
 freezeAt:11000,
-opts:[{x:37,y:66,label:'Goal-side',ok:true},{x:32,y:55,label:'Press them',ok:false},{x:50,y:62,label:'Tuck central',ok:false}],
+opts:[{x:37,y:72,label:'Goal-side',ok:true},{x:28,y:50,label:'Press them',ok:false},{x:62,y:62,label:'Tuck central',ok:false}],
 yes:'Perfect! You got goal-side between the attacker and your goal. Now they can\'t turn and shoot easily.',
 no:'You need to be between the attacker and your goal. That\'s called being goal-side \u2014 it stops them turning to shoot.'},
 
@@ -153,7 +153,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},
 ballPath:[{x:82,y:42,t:0},{x:82,y:42,t:11000}],
 ghostPath:[{x:35,y:70,t:0},{x:40,y:70,t:2500},{x:46,y:68,t:5500},{x:50,y:67,t:8500},{x:50,y:67,t:11000}],
 freezeAt:11000,
-opts:[{x:50,y:67,label:'Shift across',ok:true},{x:35,y:70,label:'Stay wide left',ok:false},{x:55,y:58,label:'Mark their CF',ok:false}],
+opts:[{x:50,y:70,label:'Shift across',ok:true},{x:25,y:78,label:'Stay wide left',ok:false},{x:60,y:52,label:'Mark their CF',ok:false}],
 yes:'Great shift! You moved across toward the ball so you\'re ready to help if they get past the wing.',
 no:'When the ball is wide, slide across toward it. Staying on the far side leaves a big gap in the middle.'},
 
@@ -177,7 +177,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},
 ballPath:[{x:50,y:40,t:0},{x:50,y:45,t:4000},{x:50,y:50,t:8000},{x:50,y:50,t:11000}],
 ghostPath:[{x:35,y:68,t:0},{x:38,y:68,t:2500},{x:42,y:68,t:5500},{x:45,y:67,t:9000},{x:45,y:67,t:11000}],
 freezeAt:11000,
-opts:[{x:45,y:67,label:'Squeeze tight',ok:true},{x:35,y:68,label:'Stay wide',ok:false},{x:45,y:58,label:'Push up high',ok:false}],
+opts:[{x:45,y:72,label:'Squeeze tight',ok:true},{x:25,y:68,label:'Stay wide',ok:false},{x:50,y:50,label:'Push up high',ok:false}],
 yes:'Perfect! By squeezing the gap between you and your partner, there\'s no space for them to play through the middle.',
 no:'The ball is central \u2014 squeeze closer to your partner to shut the gap. If you stay wide, there\'s a huge hole in the middle.'},
 
@@ -189,7 +189,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:20,y:42},
 ballPath:[{x:80,y:42,t:0},{x:50,y:42,t:3500},{x:20,y:42,t:7000},{x:20,y:42,t:11000}],
 ghostPath:[{x:60,y:68,t:0},{x:55,y:68,t:2500},{x:45,y:68,t:5500},{x:35,y:68,t:8500},{x:35,y:68,t:11000}],
 freezeAt:11000,
-opts:[{x:35,y:68,label:'Slide with the ball',ok:true},{x:60,y:68,label:'Stay on my side',ok:false},{x:35,y:58,label:'Push up high',ok:false}],
+opts:[{x:35,y:70,label:'Slide with the ball',ok:true},{x:65,y:70,label:'Stay on my side',ok:false},{x:50,y:50,label:'Push up high',ok:false}],
 yes:'Excellent! You shifted across with the ball, staying connected with your partner. That\'s how a defensive pair should move \u2014 together.',
 no:'When the ball moves across the pitch, you need to slide with it. Staying put leaves a massive gap on the ball side.'},
 
@@ -200,7 +200,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},
 ballPath:[{x:48,y:52,t:0},{x:48,y:55,t:3000},{x:47,y:58,t:6000},{x:47,y:61,t:9000},{x:47,y:61,t:11000}],
 ghostPath:[{x:50,y:65,t:0},{x:49,y:66,t:2000},{x:48,y:67,t:5000},{x:48,y:68,t:8000},{x:48,y:68,t:11000}],
 freezeAt:11000,
-opts:[{x:48,y:68,label:'Jockey and wait',ok:true},{x:47,y:58,label:'Dive in!',ok:false},{x:55,y:72,label:'Back off to goal',ok:false}],
+opts:[{x:42,y:72,label:'Jockey and wait',ok:true},{x:47,y:52,label:'Dive in!',ok:false},{x:65,y:72,label:'Back off to goal',ok:false}],
 yes:'Smart! You stayed on your feet and held them up. Your teammates are getting back \u2014 diving in would have left the goal wide open.',
 no:'Don\'t dive in when you\'re the last man! Stay on your feet, face them up, slow them down. Your teammates are running back to help.'},
 
@@ -211,7 +211,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:25},{r:'RB',x:75,y:25},{r:'LM',x:25,y:42},
 ballPath:[{x:35,y:52,t:0},{x:35,y:52,t:11000}],
 ghostPath:[{x:40,y:62,t:0},{x:39,y:60,t:2000},{x:38,y:57,t:5000},{x:36,y:54,t:8000},{x:36,y:54,t:11000}],
 freezeAt:11000,
-opts:[{x:36,y:54,label:'Press hard!',ok:true},{x:40,y:62,label:'Hold position',ok:false},{x:40,y:68,label:'Drop deeper',ok:false}],
+opts:[{x:36,y:54,label:'Press hard!',ok:true},{x:55,y:65,label:'Hold position',ok:false},{x:35,y:78,label:'Drop deeper',ok:false}],
 yes:'Great press! They were isolated with no easy pass \u2014 that\'s the moment to go and win it. Your partner is covering behind you.',
 no:'They\'re alone with nowhere to pass \u2014 this is the time to press! Your partner is covering, so go and win the ball.'},
 
@@ -222,7 +222,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:42},
 ballPath:[{x:42,y:48,t:0},{x:42,y:48,t:11000}],
 ghostPath:[{x:40,y:68,t:0},{x:40,y:66,t:2500},{x:39,y:64,t:5500},{x:39,y:62,t:8000},{x:39,y:62,t:11000}],
 freezeAt:11000,
-opts:[{x:39,y:62,label:'Step and intercept',ok:true},{x:40,y:68,label:'Hold position',ok:false},{x:42,y:55,label:'Run at passer',ok:false}],
+opts:[{x:35,y:56,label:'Step and intercept',ok:true},{x:45,y:72,label:'Hold position',ok:false},{x:55,y:45,label:'Run at passer',ok:false}],
 yes:'Brave defending! You read the pass and stepped out to intercept. You could see it coming and backed yourself \u2014 that\'s smart aggressive defending.',
 no:'The pass was coming \u2014 you could read it. Stepping out to intercept would have won the ball. Sometimes you need to be brave and go for it!'},
 
@@ -233,7 +233,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},
 ballPath:[{x:42,y:52,t:0},{x:42,y:55,t:3000},{x:42,y:58,t:6000},{x:42,y:60,t:9000},{x:42,y:60,t:11000}],
 ghostPath:[{x:42,y:68,t:0},{x:42,y:67,t:2000},{x:42,y:66,t:5000},{x:42,y:65,t:8000},{x:42,y:65,t:11000}],
 freezeAt:11000,
-opts:[{x:42,y:65,label:'Jockey, don\'t bite',ok:true},{x:42,y:58,label:'Dive in!',ok:false},{x:55,y:60,label:'Go to the runner',ok:false}],
+opts:[{x:38,y:70,label:'Jockey, don\'t bite',ok:true},{x:42,y:52,label:'Dive in!',ok:false},{x:62,y:60,label:'Go to the runner',ok:false}],
 yes:'Patient! You held your ground, jockeyed, and didn\'t commit. That forces the attacker to make the first move while your partner covers the runner.',
 no:'Don\'t commit! If you dive at the ball carrier and they pass, the runner is free. Jockey and wait for them to make a mistake.'},
 
@@ -245,7 +245,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},
 ballPath:[{x:50,y:42,t:0},{x:22,y:42,t:3000},{x:22,y:35,t:6000},{x:22,y:35,t:11000}],
 ghostPath:[{x:40,y:72,t:0},{x:40,y:68,t:2500},{x:40,y:62,t:5500},{x:40,y:56,t:8500},{x:40,y:56,t:11000}],
 freezeAt:11000,
-opts:[{x:40,y:56,label:'Push up high',ok:true},{x:40,y:72,label:'Stay back safe',ok:false},{x:40,y:65,label:'Halfway only',ok:false}],
+opts:[{x:35,y:50,label:'Push up high',ok:true},{x:48,y:75,label:'Stay back safe',ok:false},{x:58,y:62,label:'Halfway only',ok:false}],
 yes:'That\'s the right idea! Pushing up squeezes the pitch and catches their forward offside. Your whole team is compact now.',
 no:'Your team won the ball and pushed up \u2014 if you stay deep, there\'s a massive gap between you and midfield. Push up with the team!'},
 
@@ -289,7 +289,7 @@ opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},
 ballPath:[{x:18,y:35,t:0},{x:50,y:30,t:4000},{x:78,y:28,t:8000},{x:78,y:28,t:11000}],
 ghostPath:[{x:38,y:62,t:0},{x:38,y:60,t:3000},{x:38,y:58,t:6000},{x:38,y:58,t:11000}],
 freezeAt:11000,
-opts:[{x:38,y:58,label:'Hold shape',ok:true},{x:25,y:40,label:'Join the attack',ok:false},{x:42,y:52,label:'Press their CF',ok:false}],
+opts:[{x:38,y:62,label:'Hold shape',ok:true},{x:18,y:38,label:'Join the attack',ok:false},{x:55,y:48,label:'Press their CF',ok:false}],
 yes:'Smart decision! Their forward is lurking, waiting for a chance to counter. By holding your shape you\'re ready if the ball is lost. Defending is about knowing WHEN to go.',
 no:'Look at their forward \u2014 they\'re waiting for your team to lose the ball so they can sprint at your goal. If you bomb forward, there\'s nobody to stop them. Sometimes the brave call is to STAY.'}
 ];
@@ -367,7 +367,7 @@ var svg='<svg viewBox="0 0 100 150" preserveAspectRatio="none" xmlns="http://www
 var ld=document.createElement('div');ld.className='pitch-lines';ld.innerHTML=svg;pitch.appendChild(ld);
 
 var da=document.createElement('div');da.className='dir-arrow';
-da.innerHTML='<svg width="16" height="36" viewBox="0 0 16 36"><polygon points="8,0 16,12 10,12 10,36 6,36 6,12 0,12" fill="rgba(255,255,255,0.6)"/></svg><span class="dir-label">ATTACK</span>';
+da.innerHTML='<svg width="22" height="48" viewBox="0 0 16 36"><polygon points="8,0 16,12 10,12 10,36 6,36 6,12 0,12" fill="rgba(255,255,255,0.8)"/></svg><span class="dir-label">ATTACK</span>';
 pitch.appendChild(da);
 
 if(state.screen==='playing'){var gh=makeDot('ghost','');gh.id='ghost';pitch.appendChild(gh)}
