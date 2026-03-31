@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hold The Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Outfit',sans-serif;color:#e8edf3;user-select:none;-webkit-user-select:none;touch-action:none}
+body{background:#0b1120}
+#app{width:100%;height:100%;position:relative}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;transition:opacity 0.4s}
+.screen.hidden{opacity:0;pointer-events:none}
+
+/* MENU */
+.menu-bg{position:absolute;inset:0;background:linear-gradient(160deg,#0b1120 0%,#111b33 40%,#0d1528 100%);overflow:hidden}
+.menu-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(56,189,248,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.03) 1px,transparent 1px);background-size:40px 40px}
+.menu-glow{position:absolute;width:300px;height:300px;border-radius:50%;filter:blur(80px);opacity:0.15}
+.menu-glow.g1{background:#38bdf8;top:-50px;left:-50px}
+.menu-glow.g2{background:#f43f5e;bottom:-80px;right:-60px}
+.menu-content{position:relative;z-index:2}
+.logo-shield{width:80px;height:80px;margin:0 auto 16px;position:relative}
+.logo-shield svg{width:100%;height:100%}
+.game-title{font-size:32px;font-weight:900;letter-spacing:-0.5px;line-height:1.1;margin-bottom:2px}
+.game-title .accent{background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.game-sub{font-size:14px;color:#64748b;margin-bottom:32px;font-weight:400;max-width:280px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:'Outfit',sans-serif;transition:transform 0.15s}
+.btn:active{transform:scale(0.95)}
+.btn-play{padding:18px 52px;border-radius:16px;font-size:17px;font-weight:700;color:white;background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 4px 24px rgba(99,102,241,0.35),0 0 0 1px rgba(99,102,241,0.2);letter-spacing:0.3px}
+.legend{display:flex;gap:14px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;font-weight:500}
+.legend-dot{width:14px;height:14px;border-radius:50%;border:2px solid}
+.legend-dot.you{background:#3b82f6;border-color:#93c5fd;box-shadow:0 0 8px rgba(59,130,246,0.4)}
+.legend-dot.partner{background:#06b6d4;border-color:#67e8f9}
+.legend-dot.team{background:#3b82f6;border-color:#93c5fd;opacity:0.6}
+.legend-dot.opp{background:#ef4444;border-color:#fca5a5}
+.legend-dot.ball{background:#fff;border-color:#d1d5db;width:10px;height:10px}
+.legend-dot.ghost{background:rgba(59,130,246,0.15);border:2px dashed rgba(59,130,246,0.5)}
+
+/* BRIEFING */
+.phase-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.phase-pill.defend{background:rgba(244,63,94,0.12);color:#fb7185;border:1px solid rgba(244,63,94,0.25)}
+.phase-pill.read{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)}
+.phase-pill.attack{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25)}
+.brief-title{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.3px}
+.brief-text{font-size:15px;color:#94a3b8;line-height:1.6;max-width:320px;margin-bottom:6px}
+.brief-count{font-size:12px;color:#475569;margin-bottom:20px}
+.btn-go{padding:16px 44px;border-radius:14px;font-size:16px;font-weight:700;color:white;background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+
+/* GAME */
+.game-wrap{width:100%;height:100%;display:flex;flex-direction:column}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;height:48px;flex-shrink:0}
+.hud-score{font-size:22px;font-weight:800;color:#38bdf8}
+.hud-center{text-align:center}
+.hud-title{font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.hud-role{font-size:13px;font-weight:600}
+.hud-right{text-align:right;font-size:12px;color:#475569;font-weight:600}
+.timer-track{height:3px;background:rgba(255,255,255,0.06);flex-shrink:0}
+.timer-bar{height:100%;border-radius:0 2px 2px 0;transition:width 0.1s linear}
+.timer-bar.defend{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+.timer-bar.read{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.timer-bar.attack{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.pitch-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px}
+.pitch{position:relative;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,0.2);max-width:400px;touch-action:none}
+.pitch-surface{position:absolute;inset:0;background:linear-gradient(180deg,#15803d 0%,#166534 20%,#15803d 40%,#166534 60%,#15803d 80%,#166534 100%);background-size:100% 60px}
+.pitch-lines{position:absolute;inset:0;pointer-events:none}
+.pitch-lines svg{width:100%;height:100%}
+
+.dot{position:absolute;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-weight:700;pointer-events:none;transition:left 0.8s ease,top 0.8s ease}
+.dot-label{position:absolute;bottom:-13px;font-size:7px;color:rgba(255,255,255,0.5);font-weight:600;white-space:nowrap;letter-spacing:0.5px}
+.dot.user{width:38px;height:38px;background:radial-gradient(circle at 40% 35%,#60a5fa,#2563eb);border:3px solid #93c5fd;box-shadow:0 0 20px rgba(59,130,246,0.5),inset 0 -4px 6px rgba(0,0,0,0.2);z-index:20;pointer-events:auto;cursor:grab;transition:none;font-size:9px;color:white}
+.dot.partner{width:32px;height:32px;background:radial-gradient(circle at 40% 35%,#22d3ee,#0891b2);border:3px solid #67e8f9;box-shadow:0 0 14px rgba(6,182,212,0.4),inset 0 -3px 5px rgba(0,0,0,0.2);z-index:15;font-size:8px;color:white;transition:left 0.5s ease,top 0.5s ease}
+.dot.team{width:24px;height:24px;background:radial-gradient(circle at 40% 35%,#60a5fa,#2563eb);border:2px solid #93c5fd;box-shadow:inset 0 -2px 4px rgba(0,0,0,0.2);z-index:10;font-size:7px;color:rgba(255,255,255,0.8)}
+.dot.opp{width:24px;height:24px;background:radial-gradient(circle at 40% 35%,#f87171,#dc2626);border:2px solid #fca5a5;box-shadow:inset 0 -2px 4px rgba(0,0,0,0.2);z-index:10;font-size:7px;color:rgba(255,255,255,0.8)}
+.dot.ball{width:13px;height:13px;background:radial-gradient(circle at 35% 30%,#fff,#d4d4d8);border:2px solid #e5e7eb;box-shadow:0 2px 6px rgba(0,0,0,0.3);z-index:16;transition:left 1s ease,top 1s ease}
+.dot.ghost{width:42px;height:42px;background:rgba(59,130,246,0.1);border:2px dashed rgba(59,130,246,0.4);z-index:5;transition:left 0.4s ease,top 0.4s ease;animation:ghostPulse 1.5s ease-in-out infinite}
+@keyframes ghostPulse{0%,100%{opacity:0.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+
+.user-arrow{position:absolute;top:3px;left:50%;transform:translateX(-50%);pointer-events:none}
+.point-pop{position:absolute;font-weight:800;font-size:15px;color:#4ade80;z-index:30;pointer-events:none;animation:floatUp 0.8s ease forwards}
+@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-25px);opacity:0}}
+
+.dir-arrow{position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:3;pointer-events:none;opacity:0.35;display:flex;flex-direction:column;align-items:center;gap:2px}
+.dir-label{font-size:7px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.6);writing-mode:vertical-rl;text-orientation:mixed}
+
+.hint-bar{height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hint-text{font-size:13px;color:#64748b;animation:fadeIn 0.4s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* FREEZE */
+.freeze-overlay{position:absolute;inset:0;background:rgba(11,17,32,0.65);z-index:25;animation:fadeIn 0.3s}
+.freeze-prompt{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:15px;font-weight:700;color:#fff;z-index:30;text-shadow:0 2px 10px rgba(0,0,0,0.6)}
+.freeze-opt{position:absolute;transform:translate(-50%,-50%);z-index:30;cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:4px}
+.freeze-ring{width:54px;height:54px;border-radius:50%;border:3px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);transition:all 0.3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.freeze-ring.correct{border-color:#4ade80;background:rgba(74,222,128,0.3)}
+.freeze-ring.wrong{border-color:#ef4444;background:rgba(239,68,68,0.2);opacity:0.4}
+.freeze-lbl{font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.8);background:rgba(0,0,0,0.55);padding:2px 10px;border-radius:8px;white-space:nowrap;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+
+/* FEEDBACK */
+.fb-card{position:absolute;bottom:48px;left:12px;right:12px;background:rgba(11,17,32,0.96);border-radius:16px;padding:20px 22px;z-index:35;animation:slideUp 0.3s ease;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.fb-card.correct{border-color:rgba(74,222,128,0.25)}
+.fb-card.wrong{border-color:rgba(239,68,68,0.2)}
+.fb-icon{font-size:22px;margin-bottom:6px}
+.fb-msg{font-size:17px;line-height:1.6;color:#cbd5e1}
+.fb-tip{margin-top:12px;font-size:15px;color:#e2e8f0;line-height:1.6;background:rgba(56,189,248,0.06);padding:12px 14px;border-radius:10px;border-left:3px solid #38bdf8}
+.fb-next{display:block;margin:16px auto 0;background:linear-gradient(135deg,#3b82f6,#6366f1);color:white;border:none;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:'Outfit',sans-serif}
+.fb-next:active{transform:scale(0.95)}
+@keyframes slideUp{0%{transform:translateY(20px);opacity:0}100%{transform:translateY(0);opacity:1}}
+
+/* RESULTS */
+.results-label{font-size:13px;color:#64748b;margin-bottom:8px;font-weight:500}
+.results-stars{display:flex;gap:10px;justify-content:center;margin:14px 0}
+.results-star{width:44px;height:44px}
+.results-star svg{width:100%;height:100%}
+.results-star.earned svg{fill:#fbbf24}
+.results-star.empty svg{fill:#1e293b}
+.results-score{font-size:52px;font-weight:900;margin:4px 0;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.results-grid{width:100%;max-width:320px;margin:16px auto}
+.results-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px}
+.results-key{color:#64748b}
+.results-val{font-weight:700;color:#e2e8f0}
+.results-val.defend{color:#fb7185}
+.results-val.read{color:#fbbf24}
+.results-val.attack{color:#4ade80}
+.btn-again{padding:16px 44px;border-radius:14px;font-size:16px;font-weight:700;color:white;background:linear-gradient(135deg,#3b82f6,#6366f1);box-shadow:0 4px 20px rgba(99,102,241,0.3);margin-top:20px}
+@keyframes bounceIn{0%{transform:scale(0);opacity:0}50%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+.btn-menu{background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.08);padding:12px 32px;border-radius:12px;font-size:13px;font-weight:600;margin-top:10px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var S=[
+{id:1,phase:'defend',title:'Get goal-side',brief:'The opposition forward has the ball and is facing your goal. Get between them and the goal!',tip:'Always get goal-side first \u2014 between the attacker and your goal. If they beat you on the wrong side, they have a clear shot.',
+pStart:{x:35,y:62},role:'LB',partnerPos:{x:65,y:62},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:48},{r:'CM',x:50,y:50},{r:'RM',x:78,y:48},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:75,y:40},{r:'CF',x:38,y:55}],
+ballPath:[{x:38,y:55,t:0},{x:38,y:55,t:11000}],
+ghostPath:[{x:35,y:62,t:0},{x:36,y:62,t:2000},{x:37,y:64,t:5000},{x:37,y:66,t:8000},{x:37,y:66,t:11000}],
+freezeAt:11000,
+opts:[{x:37,y:66,label:'Goal-side',ok:true},{x:32,y:55,label:'Press them',ok:false},{x:50,y:62,label:'Tuck central',ok:false}],
+yes:'Perfect! You got goal-side between the attacker and your goal. Now they can\'t turn and shoot easily.',
+no:'You need to be between the attacker and your goal. That\'s called being goal-side \u2014 it stops them turning to shoot.'},
+
+{id:2,phase:'defend',title:'Shift ball-side',brief:'The ball is out on the right wing. Slide across to stay connected \u2014 don\'t get caught on the wrong side!',tip:'When the ball is wide, both defenders shift across toward it. Stay ball-side so you can help if they get past the wing player.',
+pStart:{x:35,y:70},role:'LB',partnerPos:{x:60,y:68},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:25,y:50},{r:'CM',x:50,y:52},{r:'RM',x:75,y:45},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:82,y:42},{r:'CF',x:55,y:58}],
+ballPath:[{x:82,y:42,t:0},{x:82,y:42,t:11000}],
+ghostPath:[{x:35,y:70,t:0},{x:40,y:70,t:2500},{x:46,y:68,t:5500},{x:50,y:67,t:8500},{x:50,y:67,t:11000}],
+freezeAt:11000,
+opts:[{x:50,y:67,label:'Shift across',ok:true},{x:35,y:70,label:'Stay wide left',ok:false},{x:55,y:58,label:'Mark their CF',ok:false}],
+yes:'Great shift! You moved across toward the ball so you\'re ready to help if they get past the wing.',
+no:'When the ball is wide, slide across toward it. Staying on the far side leaves a big gap in the middle.'},
+
+{id:3,phase:'defend',title:'Cover your partner',brief:'Your partner is pressing the ball. Drop behind them so if the attacker gets past, you\'re there!',tip:'When your partner goes to press, drop a few yards deeper and behind them. If the attacker beats them, you\'re the safety net.',
+pStart:{x:35,y:68},role:'LB',partnerPos:{x:62,y:68},
+partnerPath:[{x:62,y:68,t:0},{x:60,y:65,t:2500},{x:57,y:62,t:5000},{x:55,y:60,t:8000},{x:55,y:60,t:11000}],
+team:[{r:'GK',x:50,y:92},{r:'LM',x:25,y:48},{r:'CM',x:50,y:50},{r:'RM',x:78,y:48},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:72,y:48},{r:'CF',x:55,y:60}],
+ballPath:[{x:55,y:60,t:0},{x:55,y:60,t:11000}],
+ghostPath:[{x:35,y:68,t:0},{x:38,y:68,t:2000},{x:44,y:70,t:5000},{x:48,y:72,t:8000},{x:48,y:72,t:11000}],
+freezeAt:11000,
+opts:[{x:48,y:72,label:'Drop and cover',ok:true},{x:55,y:62,label:'Press with partner',ok:false},{x:35,y:68,label:'Stay wide',ok:false}],
+yes:'Smart covering! Your partner is pressing, so you dropped behind as the safety net. If the attacker gets past them, you\'re ready.',
+no:'Your partner went to press \u2014 if you both go and the attacker gets past, there\'s nobody left! Drop behind to cover.'},
+
+{id:4,phase:'defend',title:'Squeeze the gap',brief:'The ball is central and the opposition are trying to play through the middle. Close the gap with your partner!',tip:'When the ball is central, squeeze tight with your partner. A narrow gap between you makes it almost impossible to play through.',
+pStart:{x:35,y:68},role:'LB',partnerPos:{x:65,y:68},
+partnerPath:[{x:65,y:68,t:0},{x:62,y:68,t:2500},{x:58,y:68,t:5500},{x:55,y:67,t:9000},{x:55,y:67,t:11000}],
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:48},{r:'CM',x:50,y:50},{r:'RM',x:78,y:48},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:75,y:40},{r:'CF',x:50,y:55}],
+ballPath:[{x:50,y:40,t:0},{x:50,y:45,t:4000},{x:50,y:50,t:8000},{x:50,y:50,t:11000}],
+ghostPath:[{x:35,y:68,t:0},{x:38,y:68,t:2500},{x:42,y:68,t:5500},{x:45,y:67,t:9000},{x:45,y:67,t:11000}],
+freezeAt:11000,
+opts:[{x:45,y:67,label:'Squeeze tight',ok:true},{x:35,y:68,label:'Stay wide',ok:false},{x:45,y:58,label:'Push up high',ok:false}],
+yes:'Perfect! By squeezing the gap between you and your partner, there\'s no space for them to play through the middle.',
+no:'The ball is central \u2014 squeeze closer to your partner to shut the gap. If you stay wide, there\'s a huge hole in the middle.'},
+
+{id:5,phase:'defend',title:'Shift as a pair',brief:'The ball is being played from right to left across midfield. Move with it as a pair!',tip:'Good defending is about moving TOGETHER. When the ball shifts, both defenders slide across as a unit. Never let one get left behind.',
+pStart:{x:60,y:68},role:'RB',partnerPos:{x:40,y:68},
+partnerPath:[{x:40,y:68,t:0},{x:35,y:68,t:2500},{x:28,y:68,t:5500},{x:22,y:68,t:8500},{x:22,y:68,t:11000}],
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:48},{r:'CM',x:50,y:50},{r:'RM',x:78,y:48},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:20,y:42},{r:'CM',x:50,y:42},{r:'RM',x:80,y:42},{r:'CF',x:50,y:58}],
+ballPath:[{x:80,y:42,t:0},{x:50,y:42,t:3500},{x:20,y:42,t:7000},{x:20,y:42,t:11000}],
+ghostPath:[{x:60,y:68,t:0},{x:55,y:68,t:2500},{x:45,y:68,t:5500},{x:35,y:68,t:8500},{x:35,y:68,t:11000}],
+freezeAt:11000,
+opts:[{x:35,y:68,label:'Slide with the ball',ok:true},{x:60,y:68,label:'Stay on my side',ok:false},{x:35,y:58,label:'Push up high',ok:false}],
+yes:'Excellent! You shifted across with the ball, staying connected with your partner. That\'s how a defensive pair should move \u2014 together.',
+no:'When the ball moves across the pitch, you need to slide with it. Staying put leaves a massive gap on the ball side.'},
+
+{id:6,phase:'defend',title:'Jockey and delay',brief:'Their attacker is running at you 1v1 but your teammates are sprinting back. Buy time \u2014 don\'t dive in!',tip:'When you\'re the last defender and help is coming, DON\'T dive in! Stay on your feet, jockey sideways, slow them down. If you lunge and miss, they\'re through on goal.',
+pStart:{x:50,y:65},role:'CB',partnerPos:{x:65,y:75},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:30,y:55},{r:'CM',x:55,y:52},{r:'RM',x:75,y:50},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:48,y:52}],
+ballPath:[{x:48,y:52,t:0},{x:48,y:55,t:3000},{x:47,y:58,t:6000},{x:47,y:61,t:9000},{x:47,y:61,t:11000}],
+ghostPath:[{x:50,y:65,t:0},{x:49,y:66,t:2000},{x:48,y:67,t:5000},{x:48,y:68,t:8000},{x:48,y:68,t:11000}],
+freezeAt:11000,
+opts:[{x:48,y:68,label:'Jockey and wait',ok:true},{x:47,y:58,label:'Dive in!',ok:false},{x:55,y:72,label:'Back off to goal',ok:false}],
+yes:'Smart! You stayed on your feet and held them up. Your teammates are getting back \u2014 diving in would have left the goal wide open.',
+no:'Don\'t dive in when you\'re the last man! Stay on your feet, face them up, slow them down. Your teammates are running back to help.'},
+
+{id:7,phase:'defend',title:'Press now!',brief:'Their defender has the ball and is looking nervous. No teammates around them \u2014 press quickly before they find a pass!',tip:'When an opponent receives the ball under pressure with no easy pass, THAT\'S when you press hard and fast. Catch them before they can turn or pass.',
+pStart:{x:40,y:62},role:'LB',partnerPos:{x:60,y:62},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:45},{r:'CM',x:50,y:48},{r:'RM',x:78,y:45},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:25},{r:'RB',x:75,y:25},{r:'LM',x:25,y:42},{r:'CM',x:50,y:42},{r:'RM',x:75,y:42},{r:'CF',x:35,y:52}],
+ballPath:[{x:35,y:52,t:0},{x:35,y:52,t:11000}],
+ghostPath:[{x:40,y:62,t:0},{x:39,y:60,t:2000},{x:38,y:57,t:5000},{x:36,y:54,t:8000},{x:36,y:54,t:11000}],
+freezeAt:11000,
+opts:[{x:36,y:54,label:'Press hard!',ok:true},{x:40,y:62,label:'Hold position',ok:false},{x:40,y:68,label:'Drop deeper',ok:false}],
+yes:'Great press! They were isolated with no easy pass \u2014 that\'s the moment to go and win it. Your partner is covering behind you.',
+no:'They\'re alone with nowhere to pass \u2014 this is the time to press! Your partner is covering, so go and win the ball.'},
+
+{id:8,phase:'read',title:'Step out or stay?',brief:'Their midfielder is about to play a through ball to the striker. Can you read it and step out to intercept?',tip:'If you can SEE the pass coming and you\'re confident you\'ll get there first, step out and intercept. But if you\'re not sure, stay goal-side \u2014 getting it wrong means they\'re through on goal.',
+pStart:{x:40,y:68},role:'LB',partnerPos:{x:60,y:68},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:48},{r:'CM',x:50,y:50},{r:'RM',x:78,y:48},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:42},{r:'CM',x:42,y:48},{r:'RM',x:75,y:42},{r:'CF',x:38,y:58}],
+ballPath:[{x:42,y:48,t:0},{x:42,y:48,t:11000}],
+ghostPath:[{x:40,y:68,t:0},{x:40,y:66,t:2500},{x:39,y:64,t:5500},{x:39,y:62,t:8000},{x:39,y:62,t:11000}],
+freezeAt:11000,
+opts:[{x:39,y:62,label:'Step and intercept',ok:true},{x:40,y:68,label:'Hold position',ok:false},{x:42,y:55,label:'Run at passer',ok:false}],
+yes:'Brave defending! You read the pass and stepped out to intercept. You could see it coming and backed yourself \u2014 that\'s smart aggressive defending.',
+no:'The pass was coming \u2014 you could read it. Stepping out to intercept would have won the ball. Sometimes you need to be brave and go for it!'},
+
+{id:9,phase:'read',title:'Don\'t bite! Jockey',brief:'Two attackers are running at you and your partner. The ball carrier is showing it to the runner but might keep it. Don\'t commit!',tip:'In a 2v2, PATIENCE is key. Jockey the ball carrier, keep your eyes on both players, and don\'t commit until you\'re sure who\'s keeping it. If you dive at one, the other gets a free run.',
+pStart:{x:42,y:68},role:'LB',partnerPos:{x:58,y:68},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:25,y:52},{r:'CM',x:50,y:55},{r:'RM',x:75,y:52},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:40},{r:'CM',x:50,y:40},{r:'RM',x:75,y:40},{r:'CF',x:55,y:55}],
+ballPath:[{x:42,y:52,t:0},{x:42,y:55,t:3000},{x:42,y:58,t:6000},{x:42,y:60,t:9000},{x:42,y:60,t:11000}],
+ghostPath:[{x:42,y:68,t:0},{x:42,y:67,t:2000},{x:42,y:66,t:5000},{x:42,y:65,t:8000},{x:42,y:65,t:11000}],
+freezeAt:11000,
+opts:[{x:42,y:65,label:'Jockey, don\'t bite',ok:true},{x:42,y:58,label:'Dive in!',ok:false},{x:55,y:60,label:'Go to the runner',ok:false}],
+yes:'Patient! You held your ground, jockeyed, and didn\'t commit. That forces the attacker to make the first move while your partner covers the runner.',
+no:'Don\'t commit! If you dive at the ball carrier and they pass, the runner is free. Jockey and wait for them to make a mistake.'},
+
+{id:10,phase:'attack',title:'Push the line up',brief:'Your team just won the ball in midfield! Push up quickly to squeeze the opposition.',tip:'As soon as your team wins the ball, step up! Squeezing the pitch makes it harder for the opposition to attack. A high line also catches attackers offside.',
+pStart:{x:40,y:72},role:'LB',partnerPos:{x:60,y:72},
+partnerPath:[{x:60,y:72,t:0},{x:60,y:68,t:2500},{x:60,y:62,t:5500},{x:60,y:56,t:8500},{x:60,y:56,t:11000}],
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:42},{r:'CM',x:50,y:42},{r:'RM',x:78,y:42},{r:'CF',x:50,y:22}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:50,y:52}],
+ballPath:[{x:50,y:42,t:0},{x:22,y:42,t:3000},{x:22,y:35,t:6000},{x:22,y:35,t:11000}],
+ghostPath:[{x:40,y:72,t:0},{x:40,y:68,t:2500},{x:40,y:62,t:5500},{x:40,y:56,t:8500},{x:40,y:56,t:11000}],
+freezeAt:11000,
+opts:[{x:40,y:56,label:'Push up high',ok:true},{x:40,y:72,label:'Stay back safe',ok:false},{x:40,y:65,label:'Halfway only',ok:false}],
+yes:'That\'s the right idea! Pushing up squeezes the pitch and catches their forward offside. Your whole team is compact now.',
+no:'Your team won the ball and pushed up \u2014 if you stay deep, there\'s a massive gap between you and midfield. Push up with the team!'},
+
+{id:11,phase:'attack',title:'Carry it forward',brief:'You\'ve won the ball and there\'s space ahead. No one is pressing you \u2014 bring it out!',tip:'Don\'t just hoof it! When there\'s space ahead and no pressure, carry the ball forward into midfield. You become an extra attacker and pull the opposition out of position.',
+pStart:{x:35,y:68},role:'LB',partnerPos:{x:65,y:68},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:45},{r:'CM',x:50,y:48},{r:'RM',x:78,y:45},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:35},{r:'CM',x:50,y:35},{r:'RM',x:75,y:35},{r:'CF',x:50,y:50}],
+ballPath:[{x:35,y:68,t:0},{x:35,y:60,t:3000},{x:33,y:52,t:6000},{x:30,y:45,t:9000},{x:30,y:45,t:11000}],
+ghostPath:[{x:35,y:68,t:0},{x:35,y:62,t:2500},{x:33,y:55,t:5500},{x:30,y:48,t:8500},{x:30,y:48,t:11000}],
+freezeAt:11000,
+opts:[{x:30,y:48,label:'Carry it out',ok:true},{x:35,y:68,label:'Stay and pass back',ok:false},{x:50,y:55,label:'Go central',ok:false}],
+yes:'Brave! You saw the space and carried the ball forward. That creates an overload in midfield and pulls their shape apart.',
+no:'There was acres of space ahead and no one pressing you \u2014 don\'t just kick it away! Carry it forward and become an extra attacker.'},
+
+{id:12,phase:'attack',title:'Overlap the wing',brief:'Your left midfielder has the ball on the wing. You can see space outside them \u2014 go past them on the overlap!',tip:'When your wide midfielder has the ball, sprinting past them on the outside gives them an extra passing option and stretches the defence. This is the overlap!',
+pStart:{x:25,y:68},role:'LB',partnerPos:{x:60,y:65},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:18,y:42},{r:'CM',x:50,y:48},{r:'RM',x:78,y:45},{r:'CF',x:50,y:25}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:50,y:55}],
+ballPath:[{x:18,y:42,t:0},{x:18,y:42,t:11000}],
+ghostPath:[{x:25,y:68,t:0},{x:24,y:62,t:2500},{x:20,y:55,t:5000},{x:16,y:46,t:7500},{x:12,y:38,t:10000},{x:12,y:38,t:11000}],
+freezeAt:11000,
+opts:[{x:12,y:38,label:'Overlap outside',ok:true},{x:25,y:68,label:'Stay back',ok:false},{x:35,y:50,label:'Go inside',ok:false}],
+yes:'Great run! You overlapped on the outside and gave your winger a new option. The defence now has to deal with an extra player.',
+no:'Your winger has the ball and there\'s space outside them \u2014 sprint past on the overlap! It creates a 2v1 on the wing.'},
+
+{id:13,phase:'attack',title:'Support the build-up',brief:'Your goalkeeper is playing out and the team needs an option. Push up to help connect the play.',tip:'When building from the back, defenders need to push forward enough to be a passing option for midfield. Don\'t just hide behind opponents \u2014 show for the ball!',
+pStart:{x:35,y:72},role:'LB',partnerPos:{x:65,y:72},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:22,y:48},{r:'CM',x:50,y:55},{r:'RM',x:78,y:48},{r:'CF',x:50,y:28}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:42},{r:'CM',x:50,y:42},{r:'RM',x:75,y:42},{r:'CF',x:45,y:62}],
+ballPath:[{x:50,y:92,t:0},{x:65,y:72,t:3000},{x:50,y:55,t:6000},{x:50,y:55,t:11000}],
+ghostPath:[{x:35,y:72,t:0},{x:32,y:68,t:2500},{x:28,y:62,t:5500},{x:25,y:55,t:8500},{x:25,y:55,t:11000}],
+freezeAt:11000,
+opts:[{x:25,y:55,label:'Push up to help',ok:true},{x:35,y:72,label:'Stay back',ok:false},{x:50,y:60,label:'Go central',ok:false}],
+yes:'Good support! By pushing up the wing, you gave your CM another passing option and kept the build-up moving forward.',
+no:'Your team is building play and needs options. Push up the wing to offer yourself as a pass \u2014 don\'t hide behind the play!'},
+
+{id:14,phase:'read',title:'Know when to stay',brief:'Your team is attacking but the opposition have fast forwards lurking. Should you join the attack or hold your shape?',tip:'Not every attack needs you! If the opposition have quick forwards waiting to counter-attack, staying back is the smart call. Defending is about making the RIGHT decision, not always the brave one.',
+pStart:{x:38,y:62},role:'LB',partnerPos:{x:62,y:62},
+team:[{r:'GK',x:50,y:92},{r:'LM',x:18,y:35},{r:'CM',x:50,y:38},{r:'RM',x:78,y:35},{r:'CF',x:50,y:22}],
+opp:[{r:'GK',x:50,y:8},{r:'LB',x:25,y:22},{r:'RB',x:75,y:22},{r:'LM',x:25,y:38},{r:'CM',x:50,y:38},{r:'RM',x:75,y:38},{r:'CF',x:42,y:52}],
+ballPath:[{x:18,y:35,t:0},{x:50,y:30,t:4000},{x:78,y:28,t:8000},{x:78,y:28,t:11000}],
+ghostPath:[{x:38,y:62,t:0},{x:38,y:60,t:3000},{x:38,y:58,t:6000},{x:38,y:58,t:11000}],
+freezeAt:11000,
+opts:[{x:38,y:58,label:'Hold shape',ok:true},{x:25,y:40,label:'Join the attack',ok:false},{x:42,y:52,label:'Press their CF',ok:false}],
+yes:'Smart decision! Their forward is lurking, waiting for a chance to counter. By holding your shape you\'re ready if the ball is lost. Defending is about knowing WHEN to go.',
+no:'Look at their forward \u2014 they\'re waiting for your team to lose the ball so they can sprint at your goal. If you bomb forward, there\'s nobody to stop them. Sometimes the brave call is to STAY.'}
+];
+
+var state={screen:'menu',round:null,scenario:null,sIdx:0,playerPos:{x:50,y:50},score:0,roundScore:0,sScores:[],freezeAnswered:false,freezeOk:false,elapsed:0,dragging:false};
+var gameRaf=null,scoreTmr=null,startT=0,popN=0;
+
+function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t}return b}
+function lerp(a,b,t){return a+(b-a)*Math.min(1,Math.max(0,t))}
+function interpPath(p,t){for(var i=p.length-1;i>=0;i--){if(t>=p[i].t){if(i===p.length-1)return{x:p[i].x,y:p[i].y};var n=p[i+1],pct=(t-p[i].t)/(n.t-p[i].t);return{x:lerp(p[i].x,n.x,pct),y:lerp(p[i].y,n.y,pct)}}}return{x:p[0].x,y:p[0].y}}
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
+function posY(y){return(y/100)*100+'%'}
+
+function render(){
+var app=document.getElementById('app');
+if(state.screen==='menu')renderMenu(app);
+else if(state.screen==='briefing')renderBriefing(app);
+else if(state.screen==='playing'||state.screen==='freeze'||state.screen==='feedback')renderGame(app);
+else if(state.screen==='results')renderResults(app)}
+
+function renderMenu(app){
+app.innerHTML='<div class="screen"><div class="menu-bg"><div class="menu-grid"></div><div class="menu-glow g1"></div><div class="menu-glow g2"></div></div><div class="menu-content">'
++'<div class="logo-shield"><svg viewBox="0 0 80 80"><defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="M40 8 L68 22 L68 48 C68 62 55 74 40 78 C25 74 12 62 12 48 L12 22 Z" fill="url(#sg)" opacity="0.15" stroke="url(#sg)" stroke-width="2"/><text x="40" y="52" text-anchor="middle" font-size="28" fill="url(#sg)">&#x1F6E1;</text></svg></div>'
++'<div class="game-title">HOLD THE <span class="accent">LINE</span></div>'
++'<p class="game-sub">Master the art of defending. Learn to read, react, and decide \u2014 as a two-man defensive partnership.</p>'
++'<button class="btn btn-play" onclick="startRound()">Play</button>'
++'<div class="legend">'
++'<div class="legend-item"><div class="legend-dot you"></div>You</div>'
++'<div class="legend-item"><div class="legend-dot partner"></div>Partner</div>'
++'<div class="legend-item"><div class="legend-dot team"></div>Team</div>'
++'<div class="legend-item"><div class="legend-dot opp"></div>Opps</div>'
++'<div class="legend-item"><div class="legend-dot ghost"></div>Ghost</div>'
++'</div></div></div>'}
+
+function renderBriefing(app){
+var s=state.scenario,ph=s.phase;
+app.innerHTML='<div class="screen"><div class="menu-bg"><div class="menu-grid"></div></div><div class="menu-content">'
++'<div class="phase-pill '+ph+'">'+(ph==='defend'?'\u{1F6E1}\uFE0F Defend':ph==='read'?'\u2696\uFE0F Read the play':'\u26A1 Attack')+'</div>'
++'<div class="brief-title">'+s.title+'</div>'
++'<p class="brief-text">'+s.brief+'</p>'
++'<p class="brief-count">Scenario '+(state.sIdx+1)+' of 5</p>'
++'<button class="btn btn-go" onclick="beginScenario()">Go!</button>'
++'</div></div>'}
+
+function renderGame(app){
+app.innerHTML='';var c=document.createElement('div');c.className='game-wrap';
+var s=state.scenario,ph=s.phase;
+var phColor=ph==='defend'?'#fb7185':ph==='read'?'#fbbf24':'#4ade80';
+
+var hud=document.createElement('div');hud.className='hud';
+hud.innerHTML='<div><div class="hud-score" id="scoreDisp">'+Math.round(state.roundScore)+'</div></div>'
++'<div class="hud-center"><div class="hud-title">'+s.title+'</div><div class="hud-role" style="color:'+phColor+'">'+s.role+' \u00b7 '+(ph==='defend'?'Defending':ph==='read'?'Reading':'Attacking')+'</div></div>'
++'<div class="hud-right">'+(state.sIdx+1)+'/5</div>';
+c.appendChild(hud);
+
+var tt=document.createElement('div');tt.className='timer-track';
+tt.innerHTML='<div class="timer-bar '+ph+'" id="timerBar" style="width:0%"></div>';
+c.appendChild(tt);
+
+var pa=document.createElement('div');pa.className='pitch-area';
+var pitch=document.createElement('div');pitch.className='pitch';pitch.id='pitch';
+
+var surf=document.createElement('div');surf.className='pitch-surface';pitch.appendChild(surf);
+
+var svg='<svg viewBox="0 0 100 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
++'<rect x="0" y="0" width="100" height="150" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.5"/>'
++'<line x1="0" y1="75" x2="100" y2="75" stroke="rgba(255,255,255,0.18)" stroke-width="0.3"/>'
++'<circle cx="50" cy="75" r="12" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.3"/>'
++'<circle cx="50" cy="75" r="0.8" fill="rgba(255,255,255,0.25)"/>'
++'<rect x="30" y="0" width="40" height="18" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.3"/>'
++'<rect x="30" y="132" width="40" height="18" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.3"/>'
++'<rect x="40" y="0" width="20" height="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>'
++'<rect x="40" y="146" width="20" height="4" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.4"/>'
++'</svg>';
+var ld=document.createElement('div');ld.className='pitch-lines';ld.innerHTML=svg;pitch.appendChild(ld);
+
+var da=document.createElement('div');da.className='dir-arrow';
+da.innerHTML='<svg width="16" height="36" viewBox="0 0 16 36"><polygon points="8,0 16,12 10,12 10,36 6,36 6,12 0,12" fill="rgba(255,255,255,0.6)"/></svg><span class="dir-label">ATTACK</span>';
+pitch.appendChild(da);
+
+if(state.screen==='playing'){var gh=makeDot('ghost','');gh.id='ghost';pitch.appendChild(gh)}
+
+s.team.forEach(function(p){pitch.appendChild(makeDot('team',p.r))});
+s.opp.forEach(function(p){pitch.appendChild(makeDot('opp',p.r))});
+
+var partnerRole=s.role==='LB'?'RB':s.role==='RB'?'LB':'CB';
+var partner=makeDot('partner',partnerRole);partner.id='partnerDot';pitch.appendChild(partner);
+
+var ball=makeDot('ball','');ball.id='ball';pitch.appendChild(ball);
+
+var player=makeDot('user',s.role);player.id='userDot';
+var arrow=document.createElement('div');arrow.className='user-arrow';
+arrow.innerHTML='<svg width="10" height="10" viewBox="0 0 14 14"><polygon points="7,1 12,7 9,7 9,13 5,13 5,7 2,7" fill="rgba(255,255,255,0.85)"/></svg>';
+player.insertBefore(arrow,player.firstChild);
+pitch.appendChild(player);
+
+var popL=document.createElement('div');popL.id='popLayer';popL.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:30';
+pitch.appendChild(popL);
+
+if(state.screen==='freeze'||state.screen==='feedback'){
+var ov=document.createElement('div');ov.className='freeze-overlay';
+var pr=document.createElement('div');pr.className='freeze-prompt';pr.textContent='Where should you be?';ov.appendChild(pr);
+s.opts.forEach(function(opt,i){
+var fo=document.createElement('div');fo.className='freeze-opt';fo.style.left=opt.x+'%';fo.style.top=posY(opt.y);
+var ring=document.createElement('div');ring.className='freeze-ring';ring.id='fring'+i;
+if(state.screen==='feedback'){ring.classList.add(opt.ok?'correct':'wrong')}
+var lbl=document.createElement('div');lbl.className='freeze-lbl';lbl.textContent=opt.label;
+fo.appendChild(ring);fo.appendChild(lbl);
+if(state.screen==='freeze'){fo.addEventListener('click',function(){handleFreeze(i)});fo.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();handleFreeze(i)})}
+ov.appendChild(fo)});
+pitch.appendChild(ov);
+
+if(state.screen==='feedback'){
+var fb=document.createElement('div');fb.className='fb-card '+(state.freezeOk?'correct':'wrong');
+fb.innerHTML='<div class="fb-icon">'+(state.freezeOk?'\u2705':'\u274C')+'</div>'
++'<div class="fb-msg">'+(state.freezeOk?s.yes:s.no)+'</div>'
++'<div class="fb-tip">\u{1F4A1} '+s.tip+'</div>'
++'<button class="fb-next" id="nextBtn">Got it \u2192</button>';
+pitch.appendChild(fb)}}
+
+pa.appendChild(pitch);c.appendChild(pa);
+
+var hb=document.createElement('div');hb.className='hint-bar';hb.id='hintBar';
+if(state.screen==='playing')hb.innerHTML='<span class="hint-text">Drag your player toward the ghost</span>';
+c.appendChild(hb);
+app.appendChild(c);
+sizePitch();positionAll();setupTouch();
+if(state.screen==='feedback'){document.getElementById('nextBtn').addEventListener('click',function(){nextScenario()})}}
+
+function makeDot(cls,label){
+var d=document.createElement('div');d.className='dot '+cls;
+if(label){var l=document.createElement('div');l.className='dot-label';l.textContent=label;d.appendChild(l)}
+return d}
+
+function sizePitch(){
+var p=document.getElementById('pitch');if(!p)return;
+var w=p.parentElement;var ww=w.clientWidth-12,wh=w.clientHeight-12;
+var asp=2/3;var pw=ww,ph=pw/asp;if(ph>wh){ph=wh;pw=ph*asp}
+p.style.width=pw+'px';p.style.height=ph+'px'}
+
+function positionAll(){
+var s=state.scenario,p=document.getElementById('pitch');if(!p)return;
+var u=document.getElementById('userDot');if(u){u.style.left=state.playerPos.x+'%';u.style.top=posY(state.playerPos.y)}
+var gh=document.getElementById('ghost');if(gh){var gp=interpPath(s.ghostPath,state.elapsed);gh.style.left=gp.x+'%';gh.style.top=posY(gp.y)}
+var bl=document.getElementById('ball');if(bl){var bp=interpPath(s.ballPath,state.elapsed);bl.style.left=bp.x+'%';bl.style.top=posY(bp.y)}
+var pt=document.getElementById('partnerDot');if(pt){
+if(s.partnerPath){var pp=interpPath(s.partnerPath,state.elapsed);pt.style.left=pp.x+'%';pt.style.top=posY(pp.y)}
+else{pt.style.left=s.partnerPos.x+'%';pt.style.top=posY(s.partnerPos.y)}}
+var teamD=p.querySelectorAll('.dot.team');s.team.forEach(function(t,i){if(teamD[i]){teamD[i].style.left=t.x+'%';teamD[i].style.top=posY(t.y)}});
+var oppD=p.querySelectorAll('.dot.opp');s.opp.forEach(function(o,i){if(oppD[i]){oppD[i].style.left=o.x+'%';oppD[i].style.top=posY(o.y)}})}
+
+function setupTouch(){
+var pitch=document.getElementById('pitch'),player=document.getElementById('userDot');if(!pitch||!player)return;
+var off={x:0,y:0};
+function sD(cx,cy){if(state.screen!=='playing')return;var pr=pitch.getBoundingClientRect(),plr=player.getBoundingClientRect();off.x=cx-(plr.left+plr.width/2);off.y=cy-(plr.top+plr.height/2);state.dragging=true}
+function mD(cx,cy){if(!state.dragging||state.screen!=='playing')return;var pr=pitch.getBoundingClientRect();var rx=cx-off.x-pr.left,ry=cy-off.y-pr.top;state.playerPos.x=Math.max(2,Math.min(98,(rx/pr.width)*100));state.playerPos.y=Math.max(2,Math.min(98,(ry/pr.height)*100));player.style.left=state.playerPos.x+'%';player.style.top=posY(state.playerPos.y)}
+function eD(){state.dragging=false}
+player.addEventListener('touchstart',function(e){e.preventDefault();sD(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
+document.addEventListener('touchmove',function(e){if(state.dragging){e.preventDefault();mD(e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+document.addEventListener('touchend',eD);
+player.addEventListener('mousedown',function(e){e.preventDefault();sD(e.clientX,e.clientY)});
+document.addEventListener('mousemove',function(e){mD(e.clientX,e.clientY)});
+document.addEventListener('mouseup',eD);
+pitch.addEventListener('touchstart',function(e){if(state.screen==='playing'&&!state.dragging){e.preventDefault();var t=e.touches[0],pr=pitch.getBoundingClientRect();var px=(t.clientX-pr.left)/pr.width*100,py=(t.clientY-pr.top)/pr.height*100;if(dist(state.playerPos,{x:px,y:py})<20){off.x=0;off.y=0;state.dragging=true;mD(t.clientX,t.clientY)}}},{passive:false})}
+
+function startRound(){
+var defend=shuffle(S.filter(function(s){return s.phase==='defend'}));
+var read=shuffle(S.filter(function(s){return s.phase==='read'}));
+var attack=shuffle(S.filter(function(s){return s.phase==='attack'}));
+var picked=shuffle([defend[0],defend[1],read[0],attack[0],attack[1]]);
+state.round=picked;state.sIdx=0;state.roundScore=0;state.sScores=[];
+state.scenario=picked[0];state.screen='briefing';render()}
+
+function beginScenario(){
+var s=state.scenario;state.playerPos={x:s.pStart.x,y:s.pStart.y};
+state.elapsed=0;state.score=0;state.freezeAnswered=false;state.freezeOk=false;
+state.screen='playing';render();
+startT=performance.now();gameRaf=requestAnimationFrame(tick);scoreTmr=setInterval(doScore,200)}
+
+function tick(ts){
+if(state.screen!=='playing')return;
+state.elapsed=ts-startT;
+var gh=document.getElementById('ghost');if(gh){var gp=interpPath(state.scenario.ghostPath,state.elapsed);gh.style.left=gp.x+'%';gh.style.top=posY(gp.y)}
+var bl=document.getElementById('ball');if(bl){var bp=interpPath(state.scenario.ballPath,state.elapsed);bl.style.left=bp.x+'%';bl.style.top=posY(bp.y)}
+if(state.scenario.partnerPath){var pt=document.getElementById('partnerDot');if(pt){var pp=interpPath(state.scenario.partnerPath,state.elapsed);pt.style.left=pp.x+'%';pt.style.top=posY(pp.y)}}
+var tb=document.getElementById('timerBar');if(tb)tb.style.width=(state.elapsed/state.scenario.freezeAt*100)+'%';
+if(state.elapsed>=state.scenario.freezeAt){triggerFreeze();return}
+gameRaf=requestAnimationFrame(tick)}
+
+function doScore(){
+if(state.screen!=='playing')return;
+var gp=interpPath(state.scenario.ghostPath,state.elapsed);var d=dist(state.playerPos,gp);
+var pts=d<5?3:d<10?2:d<15?1:0;
+if(pts>0){state.score+=pts;state.roundScore+=pts;var sd=document.getElementById('scoreDisp');if(sd)sd.textContent=Math.round(state.roundScore);if(Math.random()<0.3)showPop(pts)}
+var u=document.getElementById('userDot');
+if(u){u.style.boxShadow=d<10?'0 0 24px rgba(74,222,128,0.6),inset 0 -4px 6px rgba(0,0,0,0.2)':d<18?'0 0 20px rgba(59,130,246,0.5),inset 0 -4px 6px rgba(0,0,0,0.2)':'0 0 16px rgba(239,68,68,0.4),inset 0 -4px 6px rgba(0,0,0,0.2)'}
+var h=document.getElementById('hintBar');
+if(h){if(d<8)h.innerHTML='<span class="hint-text" style="color:#4ade80">Great position!</span>';else if(d<18)h.innerHTML='<span class="hint-text" style="color:#38bdf8">Getting closer...</span>';else h.innerHTML='<span class="hint-text">Follow the ghost!</span>'}}
+
+function showPop(pts){var pl=document.getElementById('popLayer');if(!pl)return;var el=document.createElement('div');el.className='point-pop';el.style.left=state.playerPos.x+'%';el.style.top=posY(state.playerPos.y);el.textContent='+'+pts;pl.appendChild(el);setTimeout(function(){el.remove()},900)}
+
+function triggerFreeze(){clearInterval(scoreTmr);state.screen='freeze';render()}
+
+function handleFreeze(idx){
+if(state.freezeAnswered)return;state.freezeAnswered=true;
+var s=state.scenario,chosen=s.opts[idx];state.freezeOk=chosen.ok;
+if(chosen.ok){state.score+=50;state.roundScore+=50}
+state.sScores.push({scenario:s,score:state.score,correct:state.freezeOk});
+state.screen='feedback';render()}
+
+function nextScenario(){
+state.sIdx++;if(state.sIdx>=state.round.length){showResults();return}
+state.scenario=state.round[state.sIdx];state.screen='briefing';render()}
+
+function showResults(){
+state.screen='results';
+var stars=state.roundScore>=400?3:state.roundScore>=220?2:state.roundScore>=80?1:0;
+var correct=state.sScores.filter(function(s){return s.correct}).length;
+var dS=state.sScores.filter(function(s){return s.scenario.phase==='defend'});
+var rS=state.sScores.filter(function(s){return s.scenario.phase==='read'});
+var aS=state.sScores.filter(function(s){return s.scenario.phase==='attack'});
+var dC=dS.filter(function(s){return s.correct}).length;
+var rC=rS.filter(function(s){return s.correct}).length;
+var aC=aS.filter(function(s){return s.correct}).length;
+
+var app=document.getElementById('app');
+app.innerHTML='<div class="screen"><div class="menu-bg"><div class="menu-grid"></div></div><div class="menu-content">'
++'<div class="results-label">Round complete!</div>'
++'<div class="results-stars">'+[0,1,2].map(function(i){return'<div class="results-star '+(i<stars?'earned':'empty')+'" style="animation:bounceIn 0.4s '+(i*0.15)+'s both"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></div>'}).join('')+'</div>'
++'<div class="results-score">'+Math.round(state.roundScore)+'</div>'
++'<div class="results-grid">'
++'<div class="results-row"><span class="results-key">Decisions</span><span class="results-val">'+correct+'/5 correct</span></div>'
++(dS.length?'<div class="results-row"><span class="results-key">\u{1F6E1}\uFE0F Defend</span><span class="results-val defend">'+dC+'/'+dS.length+'</span></div>':'')
++(rS.length?'<div class="results-row"><span class="results-key">\u2696\uFE0F Read</span><span class="results-val read">'+rC+'/'+rS.length+'</span></div>':'')
++(aS.length?'<div class="results-row"><span class="results-key">\u26A1 Attack</span><span class="results-val attack">'+aC+'/'+aS.length+'</span></div>':'')
++'<div class="results-row"><span class="results-key">Position pts</span><span class="results-val">'+Math.round(state.roundScore-correct*50)+'</span></div>'
++'<div class="results-row"><span class="results-key">Decision bonus</span><span class="results-val">'+correct*50+'</span></div>'
++'</div>'
++'<button class="btn btn-again" onclick="startRound()">Play again</button>'
++'<button class="btn btn-menu" onclick="goMenu()">Menu</button>'
++'</div></div>'}
+
+function goMenu(){state.screen='menu';render()}
+window.addEventListener('resize',function(){if(state.screen==='playing'||state.screen==='freeze'||state.screen==='feedback')sizePitch()});
+render();
+</script>
+</body>
+</html>
