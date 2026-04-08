@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brainwave — Binaural Beats Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e8e6e1;
+    --text-dim: #7a7886;
+    --accent: #6ee7b7;
+    --accent-dim: rgba(110, 231, 183, 0.12);
+    --accent-glow: rgba(110, 231, 183, 0.25);
+    --warm: #f5c77e;
+    --cool: #7eb5f5;
+    --deep: #b57ef5;
+    --alert: #f57e7e;
+  }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px;
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .header h1 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 2.4rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* Warning banner */
+  .warning {
+    background: rgba(245, 126, 126, 0.06);
+    border: 1px solid rgba(245, 126, 126, 0.15);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 2rem;
+    font-size: 0.7rem;
+    color: var(--alert);
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Visualiser */
+  .vis-container {
+    position: relative;
+    height: 140px;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .vis-container canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .vis-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 0.25rem;
+    pointer-events: none;
+  }
+  .vis-freq {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.8rem;
+    font-style: italic;
+    color: var(--accent);
+    text-shadow: 0 0 30px var(--accent-glow);
+    transition: color 0.5s;
+  }
+  .vis-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+  }
+
+  /* Transport */
+  .transport {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .play-btn {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--accent-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .play-btn:hover {
+    background: var(--accent-glow);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .play-btn svg { width: 24px; height: 24px; fill: var(--accent); }
+  .play-btn.active { background: var(--accent); }
+  .play-btn.active svg { fill: var(--bg); }
+
+  /* Presets */
+  .section-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .preset {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+  }
+  .preset:hover { border-color: var(--text-dim); }
+  .preset.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .preset-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 0.15rem;
+  }
+  .preset-desc {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+  .preset-freq {
+    font-size: 0.6rem;
+    color: var(--accent);
+    margin-top: 0.3rem;
+  }
+
+  /* Sliders */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .control-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .control-group .label-text {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+  .control-group .label-value {
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 10px var(--accent-glow);
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  /* LR indicators */
+  .ear-display {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .ear-box {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  .ear-box .ear-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+  .ear-box .ear-freq {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  .ear-box .ear-unit {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+
+  /* Timer */
+  .timer-section {
+    margin-bottom: 1.5rem;
+  }
+  .timer-presets {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .timer-btn {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .timer-btn:hover { border-color: var(--text-dim); }
+  .timer-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .timer-display {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  /* Brainwave reference */
+  .reference {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .ref-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+  }
+  .ref-row + .ref-row { border-top: 1px solid var(--border); }
+  .ref-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ref-band {
+    font-size: 0.7rem;
+    font-weight: 500;
+    width: 55px;
+  }
+  .ref-range {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    width: 60px;
+  }
+  .ref-desc {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    flex: 1;
+  }
+
+  /* Headphones reminder */
+  .headphones {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .headphones svg {
+    display: block;
+    margin: 0 auto 0.4rem;
+    width: 20px; height: 20px;
+    fill: var(--text-dim);
+  }
+
+  @media (max-width: 400px) {
+    .app { padding: 1.5rem 1rem 2rem; }
+    .header h1 { font-size: 2rem; }
+    .presets { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="app">
+
+  <div class="header">
+    <h1>Brain<span>wave</span></h1>
+    <p>Binaural beats generator</p>
+  </div>
+
+  <div class="warning">
+    ⚠ Not recommended for people with epilepsy or seizure disorders. Use headphones. Keep volume low.
+  </div>
+
+  <div class="vis-container">
+    <canvas id="visCanvas"></canvas>
+    <div class="vis-overlay">
+      <div class="vis-freq" id="visFreq">10 Hz</div>
+      <div class="vis-label" id="visState">Alpha · Relaxed</div>
+    </div>
+  </div>
+
+  <div class="transport">
+    <button class="play-btn" id="playBtn" aria-label="Play/Pause">
+      <svg id="playIcon" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+      <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
+    </button>
+  </div>
+
+  <div class="section-label">Presets</div>
+  <div class="presets" id="presets">
+    <div class="preset" data-beat="2" data-carrier="180">
+      <div class="preset-name">Deep Sleep</div>
+      <div class="preset-desc">Delta waves · Wind down</div>
+      <div class="preset-freq">2 Hz · 180 Hz carrier</div>
+    </div>
+    <div class="preset" data-beat="6" data-carrier="200">
+      <div class="preset-name">Meditation</div>
+      <div class="preset-desc">Theta waves · Inner calm</div>
+      <div class="preset-freq">6 Hz · 200 Hz carrier</div>
+    </div>
+    <div class="preset active" data-beat="10" data-carrier="220">
+      <div class="preset-name">Relaxed Focus</div>
+      <div class="preset-desc">Alpha waves · Gentle flow</div>
+      <div class="preset-freq">10 Hz · 220 Hz carrier</div>
+    </div>
+    <div class="preset" data-beat="15" data-carrier="250">
+      <div class="preset-name">Concentration</div>
+      <div class="preset-desc">Low beta · Deep work</div>
+      <div class="preset-freq">15 Hz · 250 Hz carrier</div>
+    </div>
+    <div class="preset" data-beat="20" data-carrier="300">
+      <div class="preset-name">Active Focus</div>
+      <div class="preset-desc">Beta waves · Alertness</div>
+      <div class="preset-freq">20 Hz · 300 Hz carrier</div>
+    </div>
+    <div class="preset" data-beat="40" data-carrier="340">
+      <div class="preset-name">Peak State</div>
+      <div class="preset-desc">Gamma waves · Cognition</div>
+      <div class="preset-freq">40 Hz · 340 Hz carrier</div>
+    </div>
+  </div>
+
+  <div class="ear-display">
+    <div class="ear-box">
+      <div class="ear-label">Left Ear</div>
+      <div class="ear-freq" id="leftFreq">215</div>
+      <div class="ear-unit">Hz</div>
+    </div>
+    <div class="ear-box">
+      <div class="ear-freq" style="color:var(--accent); font-family:'Instrument Serif',serif; font-style:italic;" id="beatDisplay">10 Hz</div>
+      <div class="ear-unit">beat frequency</div>
+    </div>
+    <div class="ear-box">
+      <div class="ear-label">Right Ear</div>
+      <div class="ear-freq" id="rightFreq">225</div>
+      <div class="ear-unit">Hz</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>
+        <span class="label-text">Beat Frequency</span>
+        <span class="label-value" id="beatVal">10 Hz</span>
+      </label>
+      <input type="range" id="beatSlider" min="1" max="50" value="10" step="0.5">
+    </div>
+    <div class="control-group">
+      <label>
+        <span class="label-text">Carrier Frequency</span>
+        <span class="label-value" id="carrierVal">220 Hz</span>
+      </label>
+      <input type="range" id="carrierSlider" min="80" max="500" value="220" step="1">
+    </div>
+    <div class="control-group">
+      <label>
+        <span class="label-text">Volume</span>
+        <span class="label-value" id="volVal">30%</span>
+      </label>
+      <input type="range" id="volSlider" min="0" max="100" value="30" step="1">
+    </div>
+  </div>
+
+  <div class="timer-section">
+    <div class="section-label">Timer</div>
+    <div class="timer-presets" id="timerPresets">
+      <button class="timer-btn active" data-mins="0">∞</button>
+      <button class="timer-btn" data-mins="10">10m</button>
+      <button class="timer-btn" data-mins="20">20m</button>
+      <button class="timer-btn" data-mins="30">30m</button>
+      <button class="timer-btn" data-mins="60">1hr</button>
+    </div>
+    <div class="timer-display" id="timerDisplay">No timer set</div>
+  </div>
+
+  <div class="section-label">Brainwave Reference</div>
+  <div class="reference">
+    <div class="ref-row">
+      <div class="ref-dot" style="background:var(--deep)"></div>
+      <div class="ref-band">Delta</div>
+      <div class="ref-range">0.5 – 4 Hz</div>
+      <div class="ref-desc">Deep sleep, healing</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-dot" style="background:var(--cool)"></div>
+      <div class="ref-band">Theta</div>
+      <div class="ref-range">4 – 8 Hz</div>
+      <div class="ref-desc">Meditation, creativity</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-dot" style="background:var(--accent)"></div>
+      <div class="ref-band">Alpha</div>
+      <div class="ref-range">8 – 13 Hz</div>
+      <div class="ref-desc">Relaxed focus, flow</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-dot" style="background:var(--warm)"></div>
+      <div class="ref-band">Beta</div>
+      <div class="ref-range">13 – 30 Hz</div>
+      <div class="ref-desc">Concentration, alertness</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-dot" style="background:var(--alert)"></div>
+      <div class="ref-band">Gamma</div>
+      <div class="ref-range">30 + Hz</div>
+      <div class="ref-desc">Higher cognition, insight</div>
+    </div>
+  </div>
+
+  <div class="headphones">
+    <svg viewBox="0 0 24 24"><path d="M12,1C7,1,3,5,3,10v6c0,1.66,1.34,3,3,3h1c1.1,0,2-0.9,2-2v-4c0-1.1-0.9-2-2-2H5v-1c0-3.87,3.13-7,7-7s7,3.13,7,7v1h-2c-1.1,0-2,0.9-2,2v4c0,1.1,0.9,2,2,2h1c1.66,0,3-1.34,3-3v-6C21,5,17,1,12,1z"/></svg>
+    Headphones required for binaural effect
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // Audio engine
+  let ctx, oscL, oscR, gainL, gainR, mergerNode, analyser;
+  let isPlaying = false;
+
+  // State
+  let beatFreq = 10;
+  let carrierFreq = 220;
+  let volume = 0.3;
+  let timerMins = 0;
+  let timerInterval = null;
+  let timerEnd = null;
+
+  // DOM
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  const pauseIcon = document.getElementById('pauseIcon');
+  const beatSlider = document.getElementById('beatSlider');
+  const carrierSlider = document.getElementById('carrierSlider');
+  const volSlider = document.getElementById('volSlider');
+  const beatVal = document.getElementById('beatVal');
+  const carrierVal = document.getElementById('carrierVal');
+  const volVal = document.getElementById('volVal');
+  const leftFreqEl = document.getElementById('leftFreq');
+  const rightFreqEl = document.getElementById('rightFreq');
+  const beatDisplay = document.getElementById('beatDisplay');
+  const visFreq = document.getElementById('visFreq');
+  const visState = document.getElementById('visState');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const canvas = document.getElementById('visCanvas');
+  const canvasCtx = canvas.getContext('2d');
+
+  function getState(freq) {
+    if (freq < 4) return { label: 'Delta · Deep Sleep', color: 'var(--deep)' };
+    if (freq < 8) return { label: 'Theta · Meditation', color: 'var(--cool)' };
+    if (freq < 13) return { label: 'Alpha · Relaxed', color: 'var(--accent)' };
+    if (freq < 30) return { label: 'Beta · Focused', color: 'var(--warm)' };
+    return { label: 'Gamma · Peak', color: 'var(--alert)' };
+  }
+
+  function updateDisplay() {
+    const left = carrierFreq - beatFreq / 2;
+    const right = carrierFreq + beatFreq / 2;
+    beatVal.textContent = beatFreq + ' Hz';
+    carrierVal.textContent = carrierFreq + ' Hz';
+    volVal.textContent = Math.round(volume * 100) + '%';
+    leftFreqEl.textContent = left.toFixed(1);
+    rightFreqEl.textContent = right.toFixed(1);
+    beatDisplay.textContent = beatFreq + ' Hz';
+    visFreq.textContent = beatFreq + ' Hz';
+    const state = getState(beatFreq);
+    visState.textContent = state.label;
+    visFreq.style.color = state.color;
+    visFreq.style.textShadow = `0 0 30px ${state.color}`;
+  }
+
+  function updateOscillators() {
+    if (!isPlaying) return;
+    const left = carrierFreq - beatFreq / 2;
+    const right = carrierFreq + beatFreq / 2;
+    oscL.frequency.setTargetAtTime(left, ctx.currentTime, 0.05);
+    oscR.frequency.setTargetAtTime(right, ctx.currentTime, 0.05);
+    gainL.gain.setTargetAtTime(volume, ctx.currentTime, 0.05);
+    gainR.gain.setTargetAtTime(volume, ctx.currentTime, 0.05);
+  }
+
+  function startAudio() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+
+    oscL = ctx.createOscillator();
+    oscR = ctx.createOscillator();
+    gainL = ctx.createGain();
+    gainR = ctx.createGain();
+    mergerNode = ctx.createChannelMerger(2);
+
+    oscL.type = 'sine';
+    oscR.type = 'sine';
+
+    const left = carrierFreq - beatFreq / 2;
+    const right = carrierFreq + beatFreq / 2;
+    oscL.frequency.value = left;
+    oscR.frequency.value = right;
+    gainL.gain.value = volume;
+    gainR.gain.value = volume;
+
+    oscL.connect(gainL);
+    oscR.connect(gainR);
+    gainL.connect(mergerNode, 0, 0);
+    gainR.connect(mergerNode, 0, 1);
+    mergerNode.connect(analyser);
+    analyser.connect(ctx.destination);
+
+    oscL.start();
+    oscR.start();
+    isPlaying = true;
+    playIcon.style.display = 'none';
+    pauseIcon.style.display = 'block';
+    playBtn.classList.add('active');
+
+    if (timerMins > 0) startTimer();
+    drawVis();
+  }
+
+  function stopAudio() {
+    if (ctx) {
+      oscL.stop();
+      oscR.stop();
+      ctx.close();
+      ctx = null;
+    }
+    isPlaying = false;
+    playIcon.style.display = 'block';
+    pauseIcon.style.display = 'none';
+    playBtn.classList.remove('active');
+    clearTimerInterval();
+  }
+
+  // Play/Pause
+  playBtn.addEventListener('click', () => {
+    if (isPlaying) stopAudio(); else startAudio();
+  });
+
+  // Sliders
+  beatSlider.addEventListener('input', e => {
+    beatFreq = parseFloat(e.target.value);
+    updateDisplay();
+    updateOscillators();
+    clearActivePreset();
+  });
+  carrierSlider.addEventListener('input', e => {
+    carrierFreq = parseFloat(e.target.value);
+    updateDisplay();
+    updateOscillators();
+    clearActivePreset();
+  });
+  volSlider.addEventListener('input', e => {
+    volume = parseInt(e.target.value) / 100;
+    updateDisplay();
+    updateOscillators();
+  });
+
+  // Presets
+  function clearActivePreset() {
+    document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+  }
+
+  document.getElementById('presets').addEventListener('click', e => {
+    const preset = e.target.closest('.preset');
+    if (!preset) return;
+    clearActivePreset();
+    preset.classList.add('active');
+    beatFreq = parseFloat(preset.dataset.beat);
+    carrierFreq = parseFloat(preset.dataset.carrier);
+    beatSlider.value = beatFreq;
+    carrierSlider.value = carrierFreq;
+    updateDisplay();
+    updateOscillators();
+  });
+
+  // Timer
+  function clearTimerInterval() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerEnd = null;
+  }
+
+  function startTimer() {
+    clearTimerInterval();
+    if (timerMins <= 0) return;
+    timerEnd = Date.now() + timerMins * 60 * 1000;
+    timerInterval = setInterval(() => {
+      const remaining = timerEnd - Date.now();
+      if (remaining <= 0) {
+        stopAudio();
+        timerDisplay.textContent = 'Session complete';
+        return;
+      }
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')} remaining`;
+    }, 250);
+  }
+
+  document.getElementById('timerPresets').addEventListener('click', e => {
+    const btn = e.target.closest('.timer-btn');
+    if (!btn) return;
+    document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    timerMins = parseInt(btn.dataset.mins);
+    clearTimerInterval();
+    if (timerMins === 0) {
+      timerDisplay.textContent = 'No timer set';
+    } else {
+      timerDisplay.textContent = timerMins + ' min — starts on play';
+      if (isPlaying) startTimer();
+    }
+  });
+
+  // Visualiser
+  function drawVis() {
+    if (!isPlaying) return;
+    requestAnimationFrame(drawVis);
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvasCtx.scale(dpr, dpr);
+    }
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    canvasCtx.clearRect(0, 0, w, h);
+
+    const state = getState(beatFreq);
+    const cssColor = getComputedStyle(document.documentElement).getPropertyValue(
+      state.color.replace('var(', '').replace(')', '')
+    ).trim();
+
+    canvasCtx.lineWidth = 1.5;
+    canvasCtx.strokeStyle = cssColor || '#6ee7b7';
+    canvasCtx.globalAlpha = 0.7;
+    canvasCtx.beginPath();
+
+    const sliceWidth = w / bufferLength;
+    let x = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      const v = dataArray[i] / 128.0;
+      const y = (v * h) / 2;
+      if (i === 0) canvasCtx.moveTo(x, y);
+      else canvasCtx.lineTo(x, y);
+      x += sliceWidth;
+    }
+    canvasCtx.lineTo(w, h / 2);
+    canvasCtx.stroke();
+    canvasCtx.globalAlpha = 1;
+  }
+
+  // Init
+  updateDisplay();
+})();
+</script>
+</body>
+</html>
